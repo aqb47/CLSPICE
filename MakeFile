@@ -1,0 +1,19 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -g
+TARGET = cspice
+SRCS = main.c circuit.c parser.c
+OBJS = $(SRCS:.c=.o)
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
+
+%.o: %.c matrix.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm $(OBJS) $(TARGET)
+
