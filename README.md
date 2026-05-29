@@ -34,7 +34,7 @@ E = Voltage source voltage vector
 ### Conductance Matrix (G)
 This is a square matrix of dimensions `n x n` for `n` amount of non-reference nodes. 
 
-The entry `G(i, j)` or `i`th row and `j`th column entry (i =/= j) represents the negative sum of conductances of common resistors between `i`th and '`j`th non-reference nodes.
+The entry `G(i, j)` or `i`th row and `j`th column entry `(i =/= j)` represents the negative sum of conductances of common resistors between `i`th and `j`th non-reference nodes.
 
 The entry `G(k, k)` or diagonal entries represent positive sum of conductances of resistors attached to `k`th non-reference nodes.
 
