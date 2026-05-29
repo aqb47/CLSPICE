@@ -2,7 +2,7 @@
 A simple SPICE (Simulation Program with Integrated Circuit Emphasis) implementation in C
 
 ## What is SPICE
-**Please note that my following explanation glosses over many details about MNA and is applicable only to resistor and independent voltage/ current source circuits. I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
+**Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
 
 Essentially, all SPICE programs analyse a 'netlist' to get information about nodes, circuit elements and element values within a circuit, and perform an operation called MNA (Modified Nodal Analysis) based on that information. 
 
