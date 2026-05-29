@@ -2,14 +2,18 @@
 #include "parser.h"
 
 int main(void) {
+    // Netlist file
     char* netlist_filename = "netlist.sp";
 
+    // Element array
     ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
 
+    // Parse the netlist
     if (parse_file(netlist_filename, &my_elements)) {
         return 1;
     }
 
+    // Initialize the circuit
     int node_number = get_node_number(my_elements);
     int voltage_source_number = get_voltage_source_number(my_elements);
 
@@ -22,6 +26,7 @@ int main(void) {
     // Do stuff
     print_circuit(my_circuit);
 
+    // Free dynamic array
     elementDynArray_free(&my_elements);
     return 0;
 }
