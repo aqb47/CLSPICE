@@ -36,7 +36,15 @@ int main(void) {
     Matrix result = multiply(inverse(input_matrix), output_matrix);
     
     // Print result
-    print_matrix(result);
+    for (int i = 0; i < result.rows; i++) {
+        if (i < node_number - 1) {
+            printf("V%i: %lf V", i + 1, result.data[i][0]);
+        }
+        else {
+            printf("Ivs%i: %lf A", i - node_number + 2, result.data[i][0]);
+        }
+        printf("\n");
+    }
 
     // Free dynamic array
     elementDynArray_free(&my_elements);
