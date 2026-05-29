@@ -1,6 +1,37 @@
 # CSPICE
 A simple SPICE (Simulation Program with Integrated Circuit Emphasis) implementation in C
 
+## How to Use
+Clone the repository and compile the program with MakeFile.
+
+e.g. If you use mingw32 you can run
+```mingw32-make -f MakeFile```
+
+Then, input a netlist within 'netlist.sp'. 
+e.g.
+```
+* you can make a comment like this
+* element format: NAME NODE+ NODE- VALUE
+V1 1 0 24
+R1 1 2 1500
+R2 2 0 1000
+I1 2 3 0.003
+R3 3 0 2200
+R4 1 3 3300
+V2 2 4 6
+R5 4 0 4700
+I2 0 4 0.0015
+.end
+```
+
+Make sure your node names are numeric and sequential from 0 (which is always the ground node).
+
+The circuit element name must start with a valid element type and is limited to 3 characters in length.
+
+Supported element types: V (DC independent voltage source), I (DC independent current source), R (fixed resistor.
+
+Then run `cspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
+
 ## What is SPICE
 **Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
 
