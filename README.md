@@ -14,7 +14,8 @@ MNA is nodal analysis but you simply assign a current flow to the voltage source
 
 MNA can be further generalised by an interesting matrix equation.
 
-`[G B] * [v] = [I]
+```
+[G B] * [v] = [I]
 [C D]   [i]   [E]
 
 Where,
@@ -27,7 +28,8 @@ v = Node voltage vector
 i = Voltage source currents vector
 
 I = Node current vector 
-E = Voltage source voltage vector`
+E = Voltage source voltage vector
+```
 
 ### Conductance Matrix (G)
 This is a square matrix of dimensions `n x n` for `n` amount of non-reference nodes. 
