@@ -34,6 +34,14 @@ Supported element types: V (DC independent voltage source), I (DC independent cu
 
 Then run `cspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
+## What I Want to Add
+• Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity.
+
+• Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)
+
+• Capacitors and inductors
+
+
 ## What is SPICE
 **Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
 
