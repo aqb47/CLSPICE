@@ -203,6 +203,14 @@ Matrix inverse(Matrix A) {
         return EMPTY_MATRIX;
     }
 
+    // For a 1x1 matrix
+    if (rows == 1) {
+        Matrix inv_A = {.rows = 1, .cols = 1};
+        inv_A.data[0][0] = 1 / A.data[0][0];
+
+        return inv_A;
+    }
+
     // Initialize cofactor matrix
     Matrix cofactor_A = {{{0}}, rows, cols};
 

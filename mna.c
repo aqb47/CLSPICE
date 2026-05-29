@@ -19,6 +19,9 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     else if (voltage_source_number == -1) {
         return 3;
     }
+    else if (node_number - 1 + voltage_source_number > MAX_SIZE) {
+        return 4;
+    }
 
     // Input matrice constituents
     Matrix conductance_matrix_G = {.data = {{0}}, .rows = node_number - 1, .cols = node_number - 1};
