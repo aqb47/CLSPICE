@@ -1,11 +1,10 @@
 #include "circuit.h"
 #include "parser.h"
+#include "mna.h"
 
 int main(void) {
-    // Netlist file
+    // Initialize netlist file and circuit element array
     char* netlist_filename = "netlist.sp";
-
-    // Element array
     ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
 
     // Parse the netlist
@@ -23,8 +22,21 @@ int main(void) {
         .voltage_source_number = voltage_source_number
     };
 
-    // Do stuff
-    print_circuit(my_circuit);
+    // Initialize matrices
+    Matrix input_matrix;
+    Matrix output_matrix;
+
+    // Build matrices
+    if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
+        return 2;
+    }
+
+    // Get result 
+    // TODO - format it 
+    Matrix result = multiply(inverse(input_matrix), output_matrix);
+    
+    // Print result
+    print_matrix(result);
 
     // Free dynamic array
     elementDynArray_free(&my_elements);

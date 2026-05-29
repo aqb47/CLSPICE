@@ -1,4 +1,4 @@
-// Functions for parsing netlist 
+// Functions for parsing netlist into circuit elements
 
 #ifndef PARSER_H
 #define PARSER_H

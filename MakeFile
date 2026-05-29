@@ -1,19 +1,33 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -g
-TARGET = cspice
-SRCS = main.c circuit.c parser.c
-OBJS = $(SRCS:.c=.o)
+CFLAGS = -std=c11 -Wall -Wextra -g
+INCLUDES = -I. -Imatrix
 
-.PHONY: all clean
+SRCS = $(wildcard *.c) $(wildcard matrix/*.c)
+OBJ_DIR = obj
+OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
+TARGET = cspice
+
+.PHONY: all clean run debug
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^
 
-%.o: %.c matrix.h
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: %.c
+	@if not exist "$(subst /,\\,$(dir $@))" mkdir "$(subst /,\\,$(dir $@))"
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm $(OBJS) $(TARGET)
+	@if exist "$(OBJ_DIR)" rmdir /s /q "$(OBJ_DIR)"
+	@if exist "$(TARGET).exe" del /q "$(TARGET).exe"
+	@if exist "$(TARGET)" del /q "$(TARGET)"
+	@if exist *.o del /q *.o
+	@if exist matrix\*.o del /q matrix\*.o
+
+run: all
+	./$(TARGET) netlist.sp
+
+debug: CFLAGS += -O0 -ggdb
+debug: clean all
 
