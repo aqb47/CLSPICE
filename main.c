@@ -46,6 +46,8 @@ int main(void) {
         printf("\n");
     }
 
+    getchar();
+
     // Free dynamic array
     elementDynArray_free(&my_elements);
     return 0;

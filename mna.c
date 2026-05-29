@@ -49,7 +49,6 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
             if (node_from != 0) {
                 conductance_matrix_G.data[node_from - 1][node_from - 1] += 1 / resistance;
             }
-
             if (node_to != 0) {
                 conductance_matrix_G.data[node_to - 1][node_to - 1] += 1 / resistance;
             }
@@ -80,9 +79,13 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         else if (current_element.type == 'I') {
             double current = current_element.value;
 
-            // Build current source current vector
-            current_source_current_vector_I.data[node_from - 1][0] -= current;
-            current_source_current_vector_I.data[node_to - 1][0] += current;
+            // Build current source current vector skipping ground
+            if (node_from != 0) {
+                current_source_current_vector_I.data[node_from - 1][0] -= current;
+            }
+            if (node_to != 0) {
+                current_source_current_vector_I.data[node_to - 1][0] += current;
+            }
         }
         // Unknown component
         else {
