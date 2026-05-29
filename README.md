@@ -5,9 +5,11 @@ A simple SPICE (Simulation Program with Integrated Circuit Emphasis) implementat
 Clone the repository and compile the program with MakeFile.
 
 e.g. If you use mingw32 you can run
+
 ```mingw32-make -f MakeFile```
 
-Then, input a netlist within 'netlist.sp'. 
+Then, input a netlist within 'netlist.sp'.
+ 
 e.g.
 ```
 * you can make a comment like this
