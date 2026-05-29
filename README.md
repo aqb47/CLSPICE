@@ -30,7 +30,7 @@ Make sure your node names are numeric and sequential from 0 (which is always the
 
 The circuit element name must start with a valid element type and is limited to 3 characters in length.
 
-Supported element types: V (DC independent voltage source), I (DC independent current source), R (fixed resistor.
+Supported element types: V (DC independent voltage source), I (DC independent current source), R (fixed resistor).
 
 Then run `cspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
