@@ -4,17 +4,23 @@
 #include "matrix.h"
 
 int main(void) {
-    // Initialize netlist file and circuit element array
+    // Initialize netlist file 
     char* netlist_filename = "netlist.sp";
-    ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
 
-    // Parse the netlist
-    if (parse_file(netlist_filename, &my_elements)) {
-        printf("Parsing Error\n");
+    // Initialize circuit element array
+    ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
+    if (my_elements.element_array == NULL) {
+        printf("Memory allocation for element ERROR");
         return 1;
     }
 
-    // Initialize the circuit
+    // Parse the netlist
+    if (parse_file(netlist_filename, &my_elements)) {
+        printf("Parsing ERROR\n");
+        return 2;
+    }
+
+    // Initialize the circuit with the element array
     int node_number = get_node_number(my_elements);
     int voltage_source_number = get_voltage_source_number(my_elements);
 
@@ -30,12 +36,16 @@ int main(void) {
 
     // Build matrices
     if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
-        printf("Matrix Building Error\n");
-        return 2;
+        printf("Matrix Building ERROR\n");
+        return 3;
     }
 
     // Get result 
     Matrix result = gaussian_elimination(input_matrix, output_matrix);
+    if (result.rows == 0 || result.cols == 0) {
+        printf("Solving ERROR\n");
+        return 4;
+    }
 
     // Print result and pause execution
     for (int i = 0; i < result.rows; i++) {
