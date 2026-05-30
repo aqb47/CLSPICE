@@ -62,12 +62,8 @@ Element get_element(char string[], int size) {
 
     // Basically copy the original string and exit for * which represent comments
     for (int i = 0; i < size; i++) {
-        // If a line has a comment it doesn't have a valid circuit element
-        if (string[i] == '*') {
-            break;
-        }
-        // Skip the line break and add NUL terminator instead
-        if (string[i] == '\n') {
+        // Skip line breaks and comments that start with *
+        if (string[i] == '*' || string[i] == '\n') {
             processed_string[i] = '\0';
             break;
         }
