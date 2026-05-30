@@ -29,7 +29,7 @@ void format_result(Matrix result, Circuit circuit) {
             double branch_current = (V_pos - V_neg) / resistance;
 
             // Print it
-            printf("i(%s): %lf A\n", element.name, branch_current);
+            printf("i(%s) = %lf A\n", element.name, branch_current);
         }
     }
 
@@ -47,7 +47,7 @@ void format_result(Matrix result, Circuit circuit) {
                 double current_through_voltage_source = result.data[circuit.node_number - 1 + voltage_source_count][0];
 
                 // Print voltage source current
-                printf("I(%s): %lf A\n", element.name, current_through_voltage_source);
+                printf("I(%s) = %lf A\n", element.name, current_through_voltage_source);
 
                 // Increment voltage source counter
                 voltage_source_count += 1;

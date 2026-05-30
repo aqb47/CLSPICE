@@ -43,7 +43,6 @@ int main(void) {
 
     // Get result 
     Matrix result = gaussian_elimination(input_matrix, output_matrix);
-    
     if (result.rows == 0 || result.cols == 0) {
         printf("Solving ERROR\n");
         return 4;
