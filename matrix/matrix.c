@@ -243,6 +243,9 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
     if (result_matrix.cols != 1) {
         return EMPTY_MATRIX;
     }
+    if (coefficient_matrix.cols + 1 > MAX_SIZE) {
+        return EMPTY_MATRIX;
+    }
 
     // Augmented matrix that'll be coefficient matrix with another column representing result
     Matrix augmented_matrix = form_augmented_matrix(coefficient_matrix, result_matrix);
@@ -264,10 +267,6 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         }
     }
 
-    // This'll count down as we solve the augmented matrix (zero-based)
-    int variable_to_solve = coefficient_matrix.cols - 1;
-    int total_variables = variable_to_solve;
-
     // Row we start solving from will be at the bottom going to top for upper triangular matrices
     int starting_row = augmented_matrix.rows - 1;
 
@@ -279,26 +278,23 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         // Right hand side value
         double RHS = augmented_matrix.data[i][augmented_matrix.cols - 1];
         // Coefficient of variable
-        double entry_coefficient = augmented_matrix.data[i][variable_to_solve];
+        double entry_coefficient = augmented_matrix.data[i][i];
         // The unknown variable
         double variable_value;
 
         // Subtract known variable values from RHS
-        for (int j = total_variables; j > variable_to_solve; j--) {
+        for (int j = augmented_matrix.rows - 1; j > i; j--) {
             RHS -= augmented_matrix.data[i][j] * variable_matrix.data[j][0];
         }
 
         // Calculate new variable value considering no zero division
-        if (!(fabs(augmented_matrix.data[i][variable_to_solve]) < 1e-9)) {
+        if (!(fabs(augmented_matrix.data[i][i]) < 1e-9)) {
             variable_value = RHS / entry_coefficient;
-            variable_matrix.data[variable_to_solve][0] = variable_value;
+            variable_matrix.data[i][0] = variable_value;
         }
         else {
             return EMPTY_MATRIX;
         }
-
-        // Move on to next variable
-        variable_to_solve -= 1;
     }
 
     return variable_matrix;
@@ -328,7 +324,7 @@ Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_matrix) {
 // Check for row with greatest value in target column, and swap it to target row
 void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col) {
     double max = 0;
-    int max_row = 0;
+    int max_row = target_row;
 
     // Get maximum value and position of row with maximum value
     for (int i = target_row; i < augmented_matrix->rows; i++) {

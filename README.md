@@ -35,7 +35,7 @@ Supported element types: V (DC independent voltage source), I (DC independent cu
 Then run `cspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
 ## What I Want to Add
-• Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity.
+• Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity. (Done)
 
 • Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)
 
