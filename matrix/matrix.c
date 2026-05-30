@@ -6,6 +6,10 @@ static Matrix negate(Matrix A);
 static Matrix generate_submatrix(Matrix A, int row, int col);
 static Matrix multiply_constant(double constant, Matrix A);
 
+static Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_matrix);
+static void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col);
+static void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale);
+
 // Add two matrices A and B with same dimensions
 Matrix add(Matrix A, Matrix B) {
     // If dimensions don't match return an empty matrix
@@ -226,4 +230,128 @@ Matrix inverse(Matrix A) {
     Matrix inv_A = multiply_constant(1 / det_value, transpose(cofactor_A));
 
     return inv_A;
+}
+
+Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
+    // Check for correct usage
+    if (coefficient_matrix.rows != coefficient_matrix.cols) {
+        return EMPTY_MATRIX;
+    }
+    if (coefficient_matrix.rows != result_matrix.rows) {
+        return EMPTY_MATRIX;
+    }
+    if (result_matrix.cols != 1) {
+        return EMPTY_MATRIX;
+    }
+
+    // Augmented matrix that'll be coefficient matrix with another column representing result
+    Matrix augmented_matrix = form_augmented_matrix(coefficient_matrix, result_matrix);
+
+    // Pivot point will be on principal diagonal
+    for (int i = 0; i < augmented_matrix.rows; i++) {
+        // Perform partial pivoting
+        swap_greatest_row(&augmented_matrix, i, i);
+
+        // In case entry is zero 
+        if (fabs(augmented_matrix.data[i][i]) < 1e-9) {
+            return EMPTY_MATRIX;
+        }
+
+        // Make columns of rows below pivot zero
+        for (int j = i + 1; j < augmented_matrix.rows; j++) {
+            double scale = augmented_matrix.data[j][i] / augmented_matrix.data[i][i];
+            add_row(&augmented_matrix, i, j, -scale, 1);
+        }
+    }
+
+    // This'll count down as we solve the augmented matrix (zero-based)
+    int variable_to_solve = coefficient_matrix.cols - 1;
+    int total_variables = variable_to_solve;
+
+    // Row we start solving from will be at the bottom going to top for upper triangular matrices
+    int starting_row = augmented_matrix.rows - 1;
+
+    // Initialize result variable matrix with 0 as entry values and fill them up as we get solutions
+    Matrix variable_matrix = {.rows = augmented_matrix.rows, .cols = 1, .data = {{0}}};
+
+    // Move through augmented matrix bottom to top
+    for (int i = starting_row; i >= 0; i--) {
+        // Right hand side value
+        double RHS = augmented_matrix.data[i][augmented_matrix.cols - 1];
+        // Coefficient of variable
+        double entry_coefficient = augmented_matrix.data[i][variable_to_solve];
+        // The unknown variable
+        double variable_value;
+
+        // Subtract known variable values from RHS
+        for (int j = total_variables; j > variable_to_solve; j--) {
+            RHS -= augmented_matrix.data[i][j] * variable_matrix.data[j][0];
+        }
+
+        // Calculate new variable value considering no zero division
+        if (!(fabs(augmented_matrix.data[i][variable_to_solve]) < 1e-9)) {
+            variable_value = RHS / entry_coefficient;
+            variable_matrix.data[variable_to_solve][0] = variable_value;
+        }
+        else {
+            return EMPTY_MATRIX;
+        }
+
+        // Move on to next variable
+        variable_to_solve -= 1;
+    }
+
+    return variable_matrix;
+}
+
+// Form augmented matrix for Gaussian elimination
+Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_matrix) {
+    int rows = coefficient_matrix.rows;
+    int cols = coefficient_matrix.cols + result_matrix.cols;
+
+    Matrix augmented_matrix_output = {.rows = rows, .cols = cols, .data = {{0}}};
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (j < coefficient_matrix.cols) {
+                augmented_matrix_output.data[i][j] = coefficient_matrix.data[i][j];
+            }
+            else {
+                augmented_matrix_output.data[i][j] = result_matrix.data[i][j - coefficient_matrix.cols];
+            }
+        }
+    }
+
+    return augmented_matrix_output;
+}
+
+// Check for row with greatest value in target column, and swap it to target row
+void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col) {
+    double max = 0;
+    int max_row = 0;
+
+    // Get maximum value and position of row with maximum value
+    for (int i = target_row; i < augmented_matrix->rows; i++) {
+        if (fabs(augmented_matrix->data[i][target_col]) > max) {
+            max = fabs(augmented_matrix->data[i][target_col]);
+            max_row = i;
+        }
+    }
+
+    // If not, swap largest entry row to target row
+    for (int j = 0; j < augmented_matrix->cols; j++) {
+        double temp = augmented_matrix->data[max_row][j];
+
+        augmented_matrix->data[max_row][j] = augmented_matrix->data[target_row][j];
+        augmented_matrix->data[target_row][j] = temp;
+    }
+
+    return;
+}
+
+// Add one row to another 
+void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale) {
+    for (int i = 0; i < matrix->cols; i++) {
+        matrix->data[row_added_to][i] = (matrix->data[row_to_be_added][i]*row_to_add_scale) + (matrix->data[row_added_to][i]*row_add_to_scale);
+    }
 }

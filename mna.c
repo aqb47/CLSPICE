@@ -11,15 +11,19 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
 
     // Check for valid usage
     if (dynamic_element_array.element_array == NULL) {
+        printf("No elements to build array!\n");
         return 1;
     }
     else if (node_number == -1) {
+        printf("Invalid node number!\n");
         return 2;
     }
     else if (voltage_source_number == -1) {
+        printf("Invalid voltage source number!\n");
         return 3;
     }
     else if (node_number - 1 + voltage_source_number > MAX_SIZE) {
+        printf("Too many nodes and voltage sources!\n");
         return 4;
     }
 
@@ -89,6 +93,7 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         }
         // Unknown component
         else {
+            printf("Unknown component!\n");
             return 4;
         }
     }

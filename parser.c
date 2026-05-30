@@ -10,6 +10,7 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
     FILE* netlist_file = fopen(filename, "r");
     // In case file doesn't exist
     if (netlist_file == NULL) {
+        printf("Couldn't open file!");
         return 1;
     }
 
@@ -32,8 +33,9 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
         }
         // Add element to array and close the file is something goes wrong
         if (add_element(dynamic_element_array, &element)) {
+            printf("Couldn't add element!\n");
             fclose(netlist_file);
-            return 3;
+            return 2;
         }
     }
 
@@ -59,7 +61,7 @@ Element get_element(char string[], int size) {
     for (int i = 0; i < size; i++) {
         // If a line has a comment it doesn't have a valid circuit element
         if (string[i] == '*') {
-            return ERROR_ELEMENT;
+            break;
         }
         // Skip the line break and add NUL terminator instead
         if (string[i] == '\n') {

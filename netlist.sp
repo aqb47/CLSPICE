@@ -1,10 +1,6 @@
-V1 1 0 15
-I1 0 2 0.004
-R1 1 2 1000
-R2 2 3 2000
-R3 3 0 1500
-V2 3 4 10
-R4 4 0 3000
-R5 1 4 2500
-I2 4 2 0.0025
+V1 1 0 10  * Voltage source of 10V connected between Node 1 and Node 0 (ground)
+I1 0 2 2   * Current source of 2A flowing into Node 2 (from Node 0 to Node 2)
+R1 1 2 2   * 2-ohm resistor connected between Node 1 and Node 2
+R2 2 0 4   * 4-ohm resistor connected between Node 2 and Node 0
+V3 1 0 8   * 8-ohm resistor connected between Node 1 and Node 0
 .end

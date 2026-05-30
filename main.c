@@ -1,6 +1,7 @@
 #include "circuit.h"
 #include "parser.h"
 #include "mna.h"
+#include "matrix.h"
 
 int main(void) {
     // Initialize netlist file and circuit element array
@@ -9,6 +10,7 @@ int main(void) {
 
     // Parse the netlist
     if (parse_file(netlist_filename, &my_elements)) {
+        printf("Parsing Error\n");
         return 1;
     }
 
@@ -28,14 +30,14 @@ int main(void) {
 
     // Build matrices
     if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
+        printf("Matrix Building Error\n");
         return 2;
     }
 
     // Get result 
-    // TODO - format it 
-    Matrix result = multiply(inverse(input_matrix), output_matrix);
-    
-    // Print result
+    Matrix result = gaussian_elimination(input_matrix, output_matrix);
+
+    // Print result and pause execution
     for (int i = 0; i < result.rows; i++) {
         if (i < node_number - 1) {
             printf("V%i: %lf V", i + 1, result.data[i][0]);
@@ -45,7 +47,6 @@ int main(void) {
         }
         printf("\n");
     }
-
     getchar();
 
     // Free dynamic array
