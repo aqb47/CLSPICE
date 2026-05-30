@@ -4,6 +4,8 @@
 static Matrix build_input_matrix(Matrix conductance_matrix_G, Matrix incidence_matrix_B);
 static Matrix build_output_matrix(Matrix current_vector_I, Matrix voltage_vector_E);
 
+static int stamp(Element element, Matrix* G, Matrix* B, Matrix* I, Matrix* E, int* ivs_count);
+
 int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     ElementDynArray dynamic_element_array = circuit.elements;
     int node_number = circuit.node_number;
@@ -42,59 +44,9 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         // Get element info
         Element current_element = dynamic_element_array.element_array[i];
 
-        int node_from = current_element.node_pos;
-        int node_to = current_element.node_neg;
-
-        // Resistor
-        if (current_element.type == 'R') {
-            double resistance = current_element.value;
-
-            // Build conductance matrix avoiding ground nodes
-            if (node_from != 0) {
-                conductance_matrix_G.data[node_from - 1][node_from - 1] += 1 / resistance;
-            }
-            if (node_to != 0) {
-                conductance_matrix_G.data[node_to - 1][node_to - 1] += 1 / resistance;
-            }
-
-            if (node_from != 0 && node_to != 0) {
-                conductance_matrix_G.data[node_from - 1][node_to - 1] -= 1 / resistance;
-                conductance_matrix_G.data[node_to - 1][node_from - 1] -= 1 / resistance;
-            }
-        }
-        // Independent voltage source
-        else if (current_element.type == 'V') {
-            double voltage = current_element.value;
-
-            // Build voltage source voltage vector
-            voltage_source_voltage_vector_E.data[current_voltage_source_count][0] = voltage;
-
-            // Build incidence matrix but skip ground
-            if (node_from != 0) {
-                incidence_matrix_B.data[node_from - 1][current_voltage_source_count] = +1;
-            }
-            if (node_to != 0) {
-                incidence_matrix_B.data[node_to - 1][current_voltage_source_count] = -1;
-            }
-
-            current_voltage_source_count += 1;
-        }
-        // Independent current source
-        else if (current_element.type == 'I') {
-            double current = current_element.value;
-
-            // Build current source current vector skipping ground
-            if (node_from != 0) {
-                current_source_current_vector_I.data[node_from - 1][0] -= current;
-            }
-            if (node_to != 0) {
-                current_source_current_vector_I.data[node_to - 1][0] += current;
-            }
-        }
-        // Unknown component
-        else {
-            printf("Unknown component!\n");
-            return 4;
+        // Stamp that element and check for unknown element types
+        if (stamp(current_element, &conductance_matrix_G, &incidence_matrix_B, &current_source_current_vector_I, &voltage_source_voltage_vector_E, &current_voltage_source_count)) {
+            return 5;
         }
     }
 
@@ -165,4 +117,68 @@ Matrix build_output_matrix(Matrix current_vector_I, Matrix voltage_vector_E) {
     }
 
     return output_matrix;
+}
+
+// Stamp an element, add values to entries in matrices. ivs_count = independent voltage source count
+int stamp(Element element, Matrix* G, Matrix* B, Matrix* I, Matrix* E, int* ivs_count) {
+    int node_from = element.node_pos;
+    int node_to = element.node_neg;
+
+    // Check element type
+    
+    // Resistor
+    if (element.type == 'R') {
+        double resistance = element.value;
+
+        // Build conductance matrix avoiding ground nodes
+        if (node_from != 0) {
+            G->data[node_from - 1][node_from - 1] += 1 / resistance;
+        }
+        if (node_to != 0) {
+            G->data[node_to - 1][node_to - 1] += 1 / resistance;
+        }
+
+        if (node_from != 0 && node_to != 0) {
+            G->data[node_from - 1][node_to - 1] -= 1 / resistance;
+            G->data[node_to - 1][node_from - 1] -= 1 / resistance;
+        }
+    }
+
+    // Independent current source
+    else if (element.type == 'I') {
+        double current = element.value;
+
+        // Build current source current vector skipping ground
+        if (node_from != 0) {
+            I->data[node_from - 1][0] -= current;
+        }
+        if (node_to != 0) {
+            I->data[node_to - 1][0] += current;
+        }
+    }
+
+    // Independent voltage source
+    else if (element.type == 'V') {
+        double voltage = element.value;
+
+        // Build voltage source voltage vector
+        E->data[*ivs_count][0] = voltage;
+
+        // Build incidence matrix but skip ground
+        if (node_from != 0) {
+            B->data[node_from - 1][*ivs_count] = +1;
+        }
+        if (node_to != 0) {
+            B->data[node_to - 1][*ivs_count] = -1;
+        }
+
+        *ivs_count += 1;
+    }
+
+    // Unknown component
+    else {
+        return 1;
+    }
+
+    return 0;
 }
