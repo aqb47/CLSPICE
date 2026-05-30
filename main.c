@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "mna.h"
 #include "matrix.h"
+#include "output.h"
 
 int main(void) {
     // Initialize netlist file 
@@ -48,17 +49,8 @@ int main(void) {
         return 4;
     }
 
-    // Print result and pause execution
-    for (int i = 0; i < result.rows; i++) {
-        if (i < node_number - 1) {
-            printf("V%i: %lf V", i + 1, result.data[i][0]);
-        }
-        else {
-            printf("Ivs%i: %lf A", i - node_number + 2, result.data[i][0]);
-        }
-        printf("\n");
-    }
-    getchar();
+    // Show result
+    format_result(result, my_circuit);
 
     // Free dynamic array
     elementDynArray_free(&my_elements);
