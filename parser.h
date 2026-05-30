@@ -5,9 +5,13 @@
 
 // Size of line buffer during parsing
 #define LINE_SIZE 255
+// Max size of buffer for reading element value
+#define VALUE_SIZE 50
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <math.h>
 #include "circuit.h"
 
 // Parse a netlist input and save each element to dynamic array

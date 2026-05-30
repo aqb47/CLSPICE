@@ -5,7 +5,7 @@ void format_result(Matrix result, Circuit circuit) {
     // Show node voltages
     printf("\n=== NODE VOLTAGES === \n");
 
-    for (int i = 0; i < circuit.node_number; i++) {
+    for (int i = 0; i < circuit.node_number - 1; i++) {
         printf("v%i = %lf V\n", i + 1, result.data[i][0]);
     }
 
@@ -25,7 +25,7 @@ void format_result(Matrix result, Circuit circuit) {
             double V_pos = element.node_pos > 0? result.data[element.node_pos - 1][0] : 0;
             double V_neg = element.node_neg > 0? result.data[element.node_neg - 1][0] : 0;
 
-            // Calculate branch current
+            // Calculate branch current by passive sign convention (+ to -)
             double branch_current = (V_pos - V_neg) / resistance;
 
             // Print it

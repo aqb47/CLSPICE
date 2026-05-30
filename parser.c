@@ -1,9 +1,12 @@
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include "parser.h"
 #include "circuit.h"
 
 static Element get_element(char string[], int size);
+static double parse_string(char string[], int size);
 
 int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
     // Open file
@@ -74,11 +77,22 @@ Element get_element(char string[], int size) {
     // Add another NUL terminator at the very end of the buffer just in case the string to be processed is too long
     processed_string[size - 1] = '\0';
 
+    char value_string[VALUE_SIZE];
+
     // See how many parts of the data we need could be parsed on the processed line when trying to assign 
-    int result = sscanf(processed_string, "%3s %i %i %lf", element_name, &node_pos, &node_neg, &value);
+    int result = sscanf(processed_string, "%3s %i %i %s", element_name, &node_pos, &node_neg, value_string);
+
+    // Same thing we did for processed string
+    value_string[VALUE_SIZE - 1] = '\0';
 
     // Something's wrong with the line format
     if (result != 4) {
+        return ERROR_ELEMENT;
+    }
+
+    // Parse value string
+    value = parse_string(value_string, strlen(value_string));
+    if (isnan(value)) {
         return ERROR_ELEMENT;
     }
 
@@ -98,4 +112,62 @@ Element get_element(char string[], int size) {
     strcpy(output_element.name, element_name);
 
     return output_element;
+}
+
+// Convert a string array with an SI unit suffix to a double
+double parse_string(char string[], int size) {
+    // The copy of the string we'll work with so original string isn't changed
+    char string_copy[size];
+    strcpy(string_copy, string);
+
+    // If there is a suffix it'll be at the last character of the string
+    char suffix = string_copy[size - 1];
+    int is_suffix_used = 0;
+    char* end;
+
+    // Check if it's actually the suffix and isolate number part of string if so
+    if (isalpha(suffix)) {
+        string_copy[size - 1] = '\0';
+        is_suffix_used = 1;
+    }
+
+    double value = strtod(string_copy, &end);
+    
+    // In case something goes wrong
+    if (end == string_copy) {
+        return NAN;
+    }
+    
+    if (is_suffix_used) {
+        // Micro
+        if (tolower(suffix) == 'u') {
+            value *= 1e-6;
+        }
+        // Milli
+        else if (suffix == 'm') {
+            value *= 1e-3;
+        }
+        // Kilo
+        else if (tolower(suffix) == 'k') {
+            value *= 1e3;
+        }
+        // Mega
+        else if (suffix == 'M') {
+            value *= 1e6;
+        }
+        // Giga
+        else if (tolower(suffix) == 'g') {
+            value *= 1e9;
+        }
+        // Tera
+        else if (tolower(suffix) == 't') {
+            value *= 1e12;
+        }
+        // Unknown suffix
+        else {
+            return NAN;
+        }
+    }
+
+    return value;
 }
