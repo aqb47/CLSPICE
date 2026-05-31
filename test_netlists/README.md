@@ -8,7 +8,13 @@ This folder contains reusable SPICE netlists for regression testing.
 Usage:
 
 ```powershell
-python compare_cspice_tests.py test_netlists/golden
+python test_netlists/run_regression.py
 ```
 
-After dependent sources are implemented, the same command can be pointed at `test_netlists/dependent_sources`.
+To run the dependent-source suite later:
+
+```powershell
+python test_netlists/run_regression.py dependent_sources
+```
+
+The runner resolves paths relative to this directory, so it is self-contained within `test_netlists`.

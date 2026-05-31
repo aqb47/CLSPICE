@@ -3,7 +3,7 @@
 Run these with:
 
 ```powershell
-python compare_cspice_tests.py test_netlists/golden
+python test_netlists/run_regression.py golden
 ```
 
 Each `.sp` file is a DC netlist that should be solvable by the current resistor/current-source/voltage-source engine.
