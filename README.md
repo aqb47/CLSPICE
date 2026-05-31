@@ -1,4 +1,4 @@
-# CSPICE
+# CLSPICE
 A simple SPICE (Simulation Program with Integrated Circuit Emphasis) implementation in C
 
 ## How to Use
@@ -36,6 +36,8 @@ Then run `cspice.exe` and the output (node voltages + voltage source currents) s
 
 ## What I Want to Add
 • Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity. (Done)
+
+• Dynamic and sparse matrices (this will make calculations more efficient) and LU decomposition.
 
 • Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)
 
