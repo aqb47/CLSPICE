@@ -3,7 +3,7 @@ CFLAGS = -std=c11 -Wall -Wextra -g
 INCLUDES = -I. -Imatrix
 
 SRCS = $(wildcard *.c) $(wildcard matrix/*.c)
-TARGET = cspice
+TARGET = clspice
 
 .PHONY: all clean run debug
 

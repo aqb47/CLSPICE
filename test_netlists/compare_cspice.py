@@ -7,7 +7,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORKSPACE = SCRIPT_DIR.parent
 NETLIST_PATH = WORKSPACE / "netlist.sp"
-CSPICE_EXE = WORKSPACE / "cspice.exe"
+CSPICE_EXE = WORKSPACE / "clspice.exe"
 REFERENCE_DIR = SCRIPT_DIR / "reference_results"
 DEFAULT_SUITE_DIR = SCRIPT_DIR / "golden"
 TOLERANCE = 1e-6
