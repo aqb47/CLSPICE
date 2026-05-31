@@ -56,3 +56,5 @@ dkms.conf
 
 # object file folder
 obj/
+
+.venv/

@@ -1,11 +1,14 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -g
 INCLUDES = -I. -Imatrix
+DEPFLAGS = -MMD -MP
 
 SRCS = $(wildcard *.c) $(wildcard matrix/*.c)
 OBJ_DIR = obj
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 TARGET = cspice
+
+-include $(OBJS:.o=.d)
 
 .PHONY: all clean run debug
 
@@ -16,7 +19,7 @@ $(TARGET): $(OBJS)
 
 $(OBJ_DIR)/%.o: %.c
 	@if not exist "$(subst /,\\,$(dir $@))" mkdir "$(subst /,\\,$(dir $@))"
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -c $< -o $@
 
 clean:
 	@if exist "$(OBJ_DIR)" rmdir /s /q "$(OBJ_DIR)"
@@ -24,6 +27,7 @@ clean:
 	@if exist "$(TARGET)" del /q "$(TARGET)"
 	@if exist *.o del /q *.o
 	@if exist matrix\*.o del /q matrix\*.o
+	@if exist obj\*.d del /q obj\*.d
 
 run: all
 	./$(TARGET) netlist.sp
