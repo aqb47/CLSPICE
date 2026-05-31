@@ -30,9 +30,15 @@ Make sure your node names are numeric and sequential from 0 (which is always the
 
 The circuit element name must start with a valid element type and is limited to 3 characters in length.
 
-Supported element types: V (DC independent voltage source), I (DC independent current source), R (fixed resistor).
+Supported element types:
+ 
+• V (DC independent voltage source)
 
-Then run `cspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
+• I (DC independent current source)
+
+• R (fixed resistor)
+
+Then run `clspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
 ## What I Want to Add
 • Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity. (Done)
@@ -43,6 +49,7 @@ Then run `cspice.exe` and the output (node voltages + voltage source currents) s
 
 • Capacitors and inductors
 
+• A GUI? (Might be too ambitious)
 
 ## What is SPICE
 **Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
