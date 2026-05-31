@@ -11,7 +11,7 @@ Planned coverage:
 Once supported, run them the same way as the golden suite:
 
 ```powershell
-python test_netlists/run_regression.py dependent_sources
+python test_netlists/compare_cspice.py dependent_sources
 ```
 
 These files use standard SPICE controlled-source syntax and are not expected to run correctly until the parser and MNA stamping are extended.
