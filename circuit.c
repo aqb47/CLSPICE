@@ -19,7 +19,6 @@ ElementDynArray elementDynArray_init(int capacity) {
         return ERROR_DYNARRAY;
     }
 
-
     // Initialize metadata
     output_array.size = 0;
     output_array.capacity = capacity;
