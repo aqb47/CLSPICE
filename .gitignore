@@ -30,6 +30,7 @@
 
 # Executables
 *.exe
+*.dSYM
 *.out
 *.app
 *.i*86
@@ -57,4 +58,5 @@ dkms.conf
 # object file folder
 obj/
 .DS_Store
+clspice
 .venv/

@@ -1,4 +1,4 @@
-CC = gcc
+CC = clang
 CFLAGS = -std=c11 -Wall -Wextra -g
 INCLUDES = -I. -Imatrix
 

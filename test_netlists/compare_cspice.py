@@ -7,7 +7,13 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORKSPACE = SCRIPT_DIR.parent
 NETLIST_PATH = WORKSPACE / "netlist.sp"
-CSPICE_EXE = WORKSPACE / "clspice.exe"
+
+# On MacOS
+if (sys.platform == "darwin"):
+    CLSPICE_EXE = WORKSPACE / "clspice"
+else:
+    CLSPICE_EXE = WORKSPACE / "clspice.exe"
+
 REFERENCE_DIR = SCRIPT_DIR / "reference_results"
 DEFAULT_SUITE_DIR = SCRIPT_DIR / "golden"
 TOLERANCE = 1e-6
@@ -63,7 +69,7 @@ def load_reference_suite(suite_dir):
     return json.loads(reference_path.read_text(encoding="ascii"))
 
 
-def parse_cspice_output(stdout):
+def parse_clspice_output(stdout):
     node_pattern = re.compile(r"^v(\d+)\s*=\s*([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s+V$", re.MULTILINE)
     source_pattern = re.compile(r"^I\((V\w+)\)\s*=\s*([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s+A$", re.MULTILINE)
 
@@ -72,10 +78,10 @@ def parse_cspice_output(stdout):
     return node_voltages, source_currents
 
 
-def run_cspice_once(netlist_text):
+def run_clspice_once(netlist_text):
     NETLIST_PATH.write_text(netlist_text, encoding="ascii")
     completed = subprocess.run(
-        [str(CSPICE_EXE)],
+        [str(CLSPICE_EXE)],
         input="\n",
         capture_output=True,
         text=True,
@@ -85,15 +91,15 @@ def run_cspice_once(netlist_text):
 
     if completed.returncode != 0:
         raise RuntimeError(
-            f"cspice exited with code {completed.returncode}\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
+            f"clspice exited with code {completed.returncode}\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
         )
 
-    return parse_cspice_output(completed.stdout), completed.stdout
+    return parse_clspice_output(completed.stdout), completed.stdout
 
 
 def run_case(netlist_path, reference_case):
     netlist_text = netlist_path.read_text(encoding="ascii")
-    (actual_nodes, actual_sources), raw_output = run_cspice_once(netlist_text)
+    (actual_nodes, actual_sources), raw_output = run_clspice_once(netlist_text)
 
     expected_nodes = reference_case.get("nodes", {})
     expected_sources = reference_case.get("voltage_sources", {})
@@ -125,7 +131,7 @@ def run_case(netlist_path, reference_case):
             print(f"  {key:>5}: expected={exp:+.9f} actual={act:+.9f} |err|={err:.3e} {status}")
 
     if not passed:
-        print("\nRaw cspice output for debugging:")
+        print("\nRaw clspice output for debugging:")
         print(raw_output)
 
     print()
@@ -133,8 +139,8 @@ def run_case(netlist_path, reference_case):
 
 
 def main():
-    if not CSPICE_EXE.exists():
-        raise FileNotFoundError(f"missing executable: {CSPICE_EXE}")
+    if not CLSPICE_EXE.exists():
+        raise FileNotFoundError(f"missing executable: {CLSPICE_EXE}")
 
     suite_dir = resolve_suite_dir(sys.argv[1] if len(sys.argv) > 1 else None)
     if not suite_dir.exists():
