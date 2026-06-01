@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <math.h>
 
-// Initialize a coordinate form sparse matix
 SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols) {
     SparseMatrix_COO sparse_matrix = {
         .rows = rows,
@@ -19,7 +18,6 @@ SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols) {
     return sparse_matrix;
 }
 
-// Add an entry at zero-based row, col position of coordinate form sparse matrix
 int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col, double value) {
     // Can't add zero valued entry
     if (value == 0) {
@@ -59,10 +57,9 @@ int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, i
     return 0;
 }
 
-// Free allocated data from coordinate form sparse matrix
 void SparseMatrix_COO_free(SparseMatrix_COO* sparse_matrix) {
     // Free dynamically allocated values if they aren't null already
-    if (sparse_matrix->number_of_nonzeroes == NULL && sparse_matrix->nonzero_row_indices == NULL && sparse_matrix->nonzero_col_indices == NULL) {
+    if (sparse_matrix->values == NULL && sparse_matrix->nonzero_row_indices == NULL && sparse_matrix->nonzero_col_indices == NULL) {
         return;
     }
     free(sparse_matrix->values);
@@ -70,12 +67,11 @@ void SparseMatrix_COO_free(SparseMatrix_COO* sparse_matrix) {
     free(sparse_matrix->nonzero_col_indices);
 
     // Reset data
-    sparse_matrix->number_of_nonzeroes = NULL;
+    sparse_matrix->values = NULL;
     sparse_matrix->nonzero_col_indices = NULL;
     sparse_matrix->nonzero_row_indices = NULL;
 }
 
-// Get entry value at zero-based row and column indices from coordinate form sparse matrix, return NAN if something goes wrong
 double SparseMatrix_COO_get_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col) {
     // Bounds check
     if (entry_row + 1 > sparse_matrix->rows || entry_col + 1 > sparse_matrix->cols) {
@@ -95,7 +91,6 @@ double SparseMatrix_COO_get_entry(SparseMatrix_COO* sparse_matrix, int entry_row
     return 0.0;
 }
 
-// Print all entries of a coordinate form sparse matrix
 void print_sparsematrix_COO(SparseMatrix_COO* sparse_matrix) {
     for (int i = 0; i < sparse_matrix->rows; i++) {
         for (int j = 0; j < sparse_matrix->cols; j++) {
