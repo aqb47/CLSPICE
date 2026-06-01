@@ -56,5 +56,5 @@ dkms.conf
 
 # object file folder
 obj/
-
+.DS_Store
 .venv/
