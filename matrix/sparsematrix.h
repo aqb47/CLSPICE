@@ -12,6 +12,7 @@ typedef struct {
 
     int number_of_nonzeroes;
 
+    // Arrays of row, col and values of each non-zero entry where the index is position of that non-zero
     int* nonzero_row_indices;
     int* nonzero_col_indices;
     double* values;
