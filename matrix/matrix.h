@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 
-// 5x5 matrix as max size
+// 20x20 matrix as max size
 #define MAX_SIZE 20
 // Empty matrix to return when an operation fails
 #define EMPTY_MATRIX (Matrix) {{{0}}, 0, 0} 
