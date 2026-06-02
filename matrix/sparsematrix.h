@@ -38,6 +38,11 @@ typedef struct {
     double* values;
 } SparseMatrix_CSR;
 
+typedef struct { 
+    double* data; 
+    int size;
+} DenseVector;
+
 // Initialize a coordinate form sparse matix
 SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols);
 // Free allocated data from coordinate form sparse matrix
@@ -52,6 +57,9 @@ void SparseMatrix_CSR_free(SparseMatrix_CSR* sparse_matrix);
 int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col, double value);
 // Get entry value at zero-based row and column indices from coordinate form sparse matrix, return NAN if something goes wrong
 double SparseMatrix_COO_get_entry(const SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col);
+
+// Get entry value at zero-based row and column indices from compressed row sparse matrix, return NAN if something goes wrong
+double SparseMatrix_CSR_get_entry(const SparseMatrix_CSR* sparse_matrix, int entry_row, int entry_col);
 
 // Convert COO matrix to CSR matrix. As the CSR matrix is dynamically allocated, it must be freed too
 SparseMatrix_CSR COO_to_CSR(SparseMatrix_COO* sparse_matrix);

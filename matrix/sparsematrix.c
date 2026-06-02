@@ -4,6 +4,8 @@
 #include <string.h>
 #include <math.h>
 
+#define UNINITIALIZED_ROW_POINTER -1
+
 static void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix);
 static int SparseMatrix_CSR_add_entry(SparseMatrix_CSR* sparse_matrix, int entry_row, int entry_col, double value, int first_entry_of_row);
 
@@ -35,12 +37,15 @@ SparseMatrix_CSR SparseMatrix_CSR_init(int rows, int cols) {
         .values = NULL
     };
 
+    // Set row pointer array values to -1
+    memset(sparse_matrix.row_ptr, UNINITIALIZED_ROW_POINTER, sizeof(int) * (rows + 1));
+
     return sparse_matrix;
 }
 
 int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col, double value) {
     // Can't add zero valued entry
-    if (value == 0) {
+    if (fabs(value) < 1e-14) {
         return 1;
     }
 
@@ -90,10 +95,10 @@ int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, i
     return 0;
 }
 
-// This should only be used for sorted row, col entries
+// This should only be used for sorted row, col entries. Works more like assigning an entry, no incrementation
 int SparseMatrix_CSR_add_entry(SparseMatrix_CSR* sparse_matrix, int entry_row, int entry_col, double value, int first_entry_of_row) {
     // Can't add zero valued entry
-    if (value == 0) {
+    if (fabs(value) < 1e-14) {
         return 1;
     }
 
@@ -125,12 +130,10 @@ int SparseMatrix_CSR_add_entry(SparseMatrix_CSR* sparse_matrix, int entry_row, i
     sparse_matrix->nonzero_col_indices[index_to_be_added] = entry_col;
 
     if (first_entry_of_row) {
-        for (int i = entry_row; i < sparse_matrix->rows + 1; i++) {
-            sparse_matrix->row_ptr[i] = index_to_be_added;
-        }
+        sparse_matrix->row_ptr[entry_row] = index_to_be_added;
     }
 
-    // Increment non-zero count
+    // Increment non-zero count and last element of row pointer
     sparse_matrix->number_of_nonzeroes += 1;
 
     return 0;
@@ -179,6 +182,28 @@ double SparseMatrix_COO_get_entry(const SparseMatrix_COO* sparse_matrix, int ent
     return 0.0;
 }
 
+double SparseMatrix_CSR_get_entry(const SparseMatrix_CSR* sparse_matrix, int entry_row, int entry_col) {
+    // Bounds check
+    if (entry_row + 1 > sparse_matrix->rows || entry_col + 1 > sparse_matrix->cols) {
+        return NAN;
+    }
+    
+    int index_current_row = sparse_matrix->row_ptr[entry_row];
+    int index_next_row = sparse_matrix->row_ptr[entry_row + 1];
+
+    // From row pointer of entry row to next row after entry row
+    for (int i = index_current_row; i < index_next_row; i++) {
+        // Check if column matches entry column
+        if (sparse_matrix->nonzero_col_indices[i] == entry_col) {
+            // Return value of corresponding index
+            return sparse_matrix->values[i];
+        }
+    }
+
+    // If we didn't find anything return zero
+    return 0.0;
+}
+
 SparseMatrix_CSR COO_to_CSR(SparseMatrix_COO* sparse_matrix) {
     // Sort COO input matrix
     SparseMatrix_COO_sort(sparse_matrix);
@@ -212,6 +237,17 @@ SparseMatrix_CSR COO_to_CSR(SparseMatrix_COO* sparse_matrix) {
         previous_row_index = row;
     }
 
+    // Set last element of row pointer
+    output_matrix.row_ptr[output_matrix.rows] = output_matrix.number_of_nonzeroes;
+
+    // Check for unintialized row pointers
+    for (int i = output_matrix.rows - 1; i >= 0; i--) {
+        // Uninitialized row pointer will have equal value to previous row
+        if (output_matrix.row_ptr[i] == UNINITIALIZED_ROW_POINTER) {
+            output_matrix.row_ptr[i] = output_matrix.row_ptr[i + 1];
+        }
+    }
+
     return output_matrix;
 }
 
@@ -225,6 +261,16 @@ void print_sparsematrix_COO(const SparseMatrix_COO* sparse_matrix) {
     }
 }
 
+void print_sparsematrix_CSR(const SparseMatrix_CSR* sparse_matrix) {
+    for (int i = 0; i < sparse_matrix->rows; i++) {
+        for (int j = 0; j < sparse_matrix->cols; j++) {
+            printf("%lf ", SparseMatrix_CSR_get_entry(sparse_matrix, i, j));
+        }
+
+        printf("\n");
+    }
+}
+
 // Sort entries of arrays in COO matrix in order of row -> col
 void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
     // Check usage
@@ -232,27 +278,49 @@ void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
         return;
     }
 
+    // We're using malloc() for pointers instead of declared arrays, as VLAs might not be too good for the stack
+
     // Intermediate sorted arrays after first pass (column pass)
-    int intermdiate_col[sparse_matrix->number_of_nonzeroes];
-    int intermediate_row[sparse_matrix->number_of_nonzeroes];
-    double intermediate_values[sparse_matrix->number_of_nonzeroes];
+    int* intermediate_col = malloc(sizeof(int) * sparse_matrix->number_of_nonzeroes);
+    int* intermediate_row = malloc(sizeof(int) * sparse_matrix->number_of_nonzeroes);
+    double* intermediate_values = malloc(sizeof(double) * sparse_matrix->number_of_nonzeroes);
 
     // Final sorted arrays after second pass (row pass)
-    int sorted_col[sparse_matrix->number_of_nonzeroes];
-    int sorted_row[sparse_matrix->number_of_nonzeroes];
-    double sorted_values[sparse_matrix->number_of_nonzeroes];
+    int* sorted_col = malloc(sizeof(int) * sparse_matrix->number_of_nonzeroes);
+    int* sorted_row = malloc(sizeof(int) * sparse_matrix->number_of_nonzeroes);
+    double* sorted_values = malloc(sizeof(double) * sparse_matrix->number_of_nonzeroes);
 
     // Counts and next position arrays
-    int col_counts[sparse_matrix->cols];
-    int row_counts[sparse_matrix->rows];
-    int next_pos_col[sparse_matrix->cols];
-    int next_pos_row[sparse_matrix->rows];
+    int* col_counts = malloc(sizeof(int) * sparse_matrix->cols);
+    int* row_counts = malloc(sizeof(int) * sparse_matrix->rows);
+    int* next_pos_col = malloc(sizeof(int) * sparse_matrix->cols);
+    int* next_pos_row = malloc(sizeof(int) * sparse_matrix->rows);
+
+    if ((intermediate_col == NULL || intermediate_row == NULL || intermediate_values == NULL) ||
+        (sorted_col == NULL || sorted_row == NULL || sorted_values == NULL) || 
+        (col_counts == NULL || row_counts == NULL || next_pos_col == NULL || next_pos_row == NULL)) {
+            free(intermediate_col);
+            free(intermediate_row);
+            free(intermediate_values);
+
+            free(sorted_col);
+            free(sorted_row);
+            free(sorted_values);
+
+            free(col_counts);
+            free(row_counts);
+
+            free(next_pos_col);
+            free(next_pos_row);
+
+            return;
+    }
 
     // Initialize
-    memset(col_counts, 0, sizeof(col_counts));
-    memset(row_counts, 0, sizeof(row_counts));
-    memset(next_pos_col, 0, sizeof(next_pos_col));
-    memset(next_pos_row, 0, sizeof(next_pos_row));
+    memset(col_counts, 0, sizeof(int) * sparse_matrix->cols);
+    memset(row_counts, 0, sizeof(int) * sparse_matrix->rows);
+    memset(next_pos_col, 0, sizeof(int) * sparse_matrix->cols);
+    memset(next_pos_row, 0, sizeof(int) * sparse_matrix->rows);
 
     for (int i = 0; i < sparse_matrix->number_of_nonzeroes; i++) {
         col_counts[sparse_matrix->nonzero_col_indices[i]] += 1;
@@ -273,7 +341,7 @@ void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
 
         int new_index = next_pos_col[col_index]++;
 
-        intermdiate_col[new_index] = col_index;
+        intermediate_col[new_index] = col_index;
         intermediate_row[new_index] = sparse_matrix->nonzero_row_indices[i];
         intermediate_values[new_index] = sparse_matrix->values[i];
     }
@@ -284,7 +352,7 @@ void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
 
         int new_index = next_pos_row[row_index]++;
 
-        sorted_col[new_index] = intermdiate_col[i];
+        sorted_col[new_index] = intermediate_col[i];
         sorted_row[new_index] = intermediate_row[i];
         sorted_values[new_index] = intermediate_values[i];
     }
@@ -295,4 +363,19 @@ void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
         sparse_matrix->nonzero_row_indices[i] = sorted_row[i];
         sparse_matrix->values[i] = sorted_values[i];
     }
+
+    // Free allocated memory
+    free(intermediate_col);
+    free(intermediate_row);
+    free(intermediate_values);
+
+    free(sorted_col);
+    free(sorted_row);
+    free(sorted_values);
+
+    free(col_counts);
+    free(row_counts);
+
+    free(next_pos_col);
+    free(next_pos_row);
 }
