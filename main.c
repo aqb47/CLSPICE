@@ -1,7 +1,7 @@
 #include "circuit.h"
 #include "parser.h"
-#include "mna.h"
-#include "matrix.h"
+#include "mmna.h"
+#include "sparsematrix.h"
 #include "output.h"
 
 int main(void) {
@@ -32,26 +32,40 @@ int main(void) {
     };
 
     // Initialize matrices
-    Matrix input_matrix;
-    Matrix output_matrix;
+    int variable_count = node_number + voltage_source_number - 1;
 
-    // Build matrices
-    if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
-        printf("Matrix Building ERROR\n");
+    SparseMatrix_COO input_sparse_matrix = SparseMatrix_COO_init(variable_count, variable_count);
+    if (input_sparse_matrix.rows == ERROR_SPARSE_MATRIX_COO.rows) {
+        printf("Input matrix allocation ERROR\n");
         return 3;
     }
 
-    // Get result 
-    Matrix result = gaussian_elimination(input_matrix, output_matrix);
-    if (result.rows == 0 || result.cols == 0) {
-        printf("Solving ERROR\n");
+    DenseVector output_dense_vector = DenseVector_init(variable_count);
+    if (output_dense_vector.size == ERROR_VECTOR.size) {
+        printf("Output vector allocation ERROR\n");
+
+        SparseMatrix_COO_free(&input_sparse_matrix);
+
         return 4;
     }
 
-    // Show result
-    format_result(result, my_circuit);
+    // Build matrices
+    if (build_input_output_sparsematrix(&input_sparse_matrix, &output_dense_vector, my_circuit)) {
+        printf("Matrix building ERROR\n");
 
-    // Free dynamic array
+        DenseVector_free(&output_dense_vector);
+        SparseMatrix_COO_free(&input_sparse_matrix);
+        
+        return 5;
+    }
+
+    print_sparsematrix_COO(&input_sparse_matrix);
+    print_densevector(&output_dense_vector);
+
+    // Free dynamic array and allocated stuff
     elementDynArray_free(&my_elements);
+    DenseVector_free(&output_dense_vector);
+    SparseMatrix_COO_free(&input_sparse_matrix);
+
     return 0;
 }

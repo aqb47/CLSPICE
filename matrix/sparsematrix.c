@@ -4,12 +4,15 @@
 #include <string.h>
 #include <math.h>
 
-#define UNINITIALIZED_ROW_POINTER -1
-
 static void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix);
 static int SparseMatrix_CSR_add_entry(SparseMatrix_CSR* sparse_matrix, int entry_row, int entry_col, double value, int first_entry_of_row);
 
 SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols) {
+    // Bounds check
+    if (rows < 1 || cols < 1) {
+        return ERROR_SPARSE_MATRIX_COO;
+    }
+
     SparseMatrix_COO sparse_matrix = {
         .rows = rows,
         .cols = cols,
@@ -25,6 +28,11 @@ SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols) {
 }
 
 SparseMatrix_CSR SparseMatrix_CSR_init(int rows, int cols) {
+    // Bounds check
+    if (rows < 1 || cols < 1) {
+        return ERROR_SPARSE_MATRIX_CSR;
+    }
+
     SparseMatrix_CSR sparse_matrix = {
         .rows = rows,
         .cols = cols,
@@ -41,6 +49,27 @@ SparseMatrix_CSR SparseMatrix_CSR_init(int rows, int cols) {
     memset(sparse_matrix.row_ptr, UNINITIALIZED_ROW_POINTER, sizeof(int) * (rows + 1));
 
     return sparse_matrix;
+}
+
+DenseVector DenseVector_init(int size) {
+    // Bounds check
+    if (size < 1) {
+        return ERROR_VECTOR;
+    } 
+
+    // Attempt memory allocation for double array of vector
+    DenseVector output_vector;
+    
+    output_vector.data = calloc(size, sizeof(double));
+
+    // In case something goes wrong
+    if (output_vector.data == NULL) {
+        return ERROR_VECTOR;
+    }
+
+    output_vector.size = size;
+
+    return output_vector;
 }
 
 int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col, double value) {
@@ -74,6 +103,7 @@ int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, i
         free(temp_row);
         free(temp_col);
 
+        printf("COO matrix entry allocation ERROR\n");
         return 3;
     }
 
@@ -88,7 +118,7 @@ int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, i
     sparse_matrix->values[index_to_be_added] = value;
     sparse_matrix->nonzero_row_indices[index_to_be_added] = entry_row;
     sparse_matrix->nonzero_col_indices[index_to_be_added] = entry_col;
-    
+
     // Increment non-zero count
     sparse_matrix->number_of_nonzeroes += 1;
 
@@ -139,6 +169,19 @@ int SparseMatrix_CSR_add_entry(SparseMatrix_CSR* sparse_matrix, int entry_row, i
     return 0;
 }
 
+int DenseVector_add_entry(DenseVector* dense_vector, int entry_row, double value) {
+    // Bounds check
+    if (entry_row + 1 > dense_vector->size) {
+        printf("Out of bounds addition to dense vector ERROR\n");
+        return 1;
+    }
+
+    // Increment value
+    dense_vector->data[entry_row] += value;
+
+    return 0;
+}
+
 void SparseMatrix_COO_free(SparseMatrix_COO* sparse_matrix) {
     // Free dynamically allocated values 
     free(sparse_matrix->values);
@@ -161,6 +204,15 @@ void SparseMatrix_CSR_free(SparseMatrix_CSR* sparse_matrix) {
     sparse_matrix->values = NULL;
     sparse_matrix->nonzero_col_indices = NULL;
     sparse_matrix->row_ptr = NULL;
+}
+
+void DenseVector_free(DenseVector* dense_vector) {
+    // Free dynamically allocated values
+    free(dense_vector->data);
+
+    // Reset data
+    dense_vector->data = NULL;
+    dense_vector->size = 0;
 }
 
 double SparseMatrix_COO_get_entry(const SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col) {
@@ -269,6 +321,14 @@ void print_sparsematrix_CSR(const SparseMatrix_CSR* sparse_matrix) {
 
         printf("\n");
     }
+}
+
+void print_densevector(const DenseVector* dense_vector) {
+    for (int i = 0; i < dense_vector->size; i++) {
+        printf("%lf\n", dense_vector->data[i]);
+    }
+
+    printf("\n");
 }
 
 // Sort entries of arrays in COO matrix in order of row -> col
