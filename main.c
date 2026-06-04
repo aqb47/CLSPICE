@@ -45,7 +45,6 @@ int main(void) {
         printf("Output vector allocation ERROR\n");
 
         SparseMatrix_COO_free(&input_sparse_matrix);
-
         return 4;
     }
 
@@ -55,12 +54,11 @@ int main(void) {
 
         DenseVector_free(&output_dense_vector);
         SparseMatrix_COO_free(&input_sparse_matrix);
-        
         return 5;
     }
 
-    print_sparsematrix_COO(&input_sparse_matrix);
-    print_densevector(&output_dense_vector);
+    // Solve the equations
+    DenseVector result = SparseMatrix_LU_decomposition(&input_sparse_matrix, &output_dense_vector);
 
     // Free dynamic array and allocated stuff
     elementDynArray_free(&my_elements);

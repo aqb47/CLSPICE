@@ -10,6 +10,7 @@
 #define ERROR_VECTOR (DenseVector) {.size = 0, .data = NULL}
 #define ERROR_SPARSE_MATRIX_COO (SparseMatrix_COO) {.cols = 0, .rows = 0, .nonzero_col_indices = NULL, .nonzero_row_indices = NULL, .values = NULL, .number_of_nonzeroes = 0}
 #define ERROR_SPARSE_MATRIX_CSR (SparseMatrix_CSR) {.cols = 0, .rows = 0, .nonzero_col_indices = NULL, .row_ptr = NULL, .values = NULL, .number_of_nonzeroes = 0}
+#define ERROR_LU_MATRIX (LUFactorization) {.size = 0, .permutation_vector = NULL, .LU_data = NULL}
 
 // Coordinate format sparse matrix - for building a sparse matrix
 typedef struct {
@@ -43,10 +44,25 @@ typedef struct {
     double* values;
 } SparseMatrix_CSR;
 
+// A 1 column matrix or a vector 
 typedef struct { 
     double* data; 
     int size;
 } DenseVector;
+
+// LU factorization dense matrix
+typedef struct {
+    // L = Lower triangular, U = Upper triangular. 
+    // The L matrix has diagonal entries equal to 1, so we can store both L and U matrix implicitly in a single matrix.
+    double** LU_data;
+
+    // The permutation vector represents row order. It'll initially be [0, 1, 2, ... size - 1]
+    // By partial pivoting the row order will change and so will the permutation vector
+    int* permutation_vector;
+
+    // Dimensions
+    int size;
+} LUFactorization;
 
 // Initialize a coordinate form sparse matix
 SparseMatrix_COO SparseMatrix_COO_init(int rows, int cols);
@@ -63,6 +79,13 @@ DenseVector DenseVector_init(int size);
 // Free allocated data from a dense vector
 void DenseVector_free(DenseVector* dense_vector);
 
+// Populate LU factorization matrix from CSR sparse matrix
+LUFactorization lu_factor(SparseMatrix_CSR* input_matrix_CSR);
+// Solve LU matrix
+DenseVector lu_solve(LUFactorization* lu_matrix);
+// Free LU matrix
+void lu_free(LUFactorization* lu_matrix);
+
 // Add an entry at zero-based row, col position of coordinate form sparse matrix. If entry already exists, the value will be incremented to entry value
 int SparseMatrix_COO_add_entry(SparseMatrix_COO* sparse_matrix, int entry_row, int entry_col, double value);
 // Get entry value at zero-based row and column indices from coordinate form sparse matrix, return NAN if something goes wrong
@@ -76,6 +99,9 @@ int DenseVector_add_entry(DenseVector* dense_vector, int entry_row, double value
 
 // Convert COO matrix to CSR matrix. As the CSR matrix is dynamically allocated, it must be freed too
 SparseMatrix_CSR COO_to_CSR(SparseMatrix_COO* sparse_matrix);
+
+// Solve system of equations represented by coefficient matrix as a sparse matrix COO and output vector as a dense vector using LU decomposition
+DenseVector SparseMatrix_LU_decomposition(SparseMatrix_COO* input_matrix_COO, DenseVector* output_vector);
 
 // Print all entries of a coordinate form sparse matrix
 void print_sparsematrix_COO(const SparseMatrix_COO* sparse_matrix);

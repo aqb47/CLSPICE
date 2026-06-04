@@ -439,3 +439,72 @@ void SparseMatrix_COO_sort(SparseMatrix_COO* sparse_matrix) {
     free(next_pos_col);
     free(next_pos_row);
 }
+
+DenseVector SparseMatrix_LU_decomposition(SparseMatrix_COO* input_matrix_COO, DenseVector* output_vector) {
+    // Work with CSR matrix for this operation
+    SparseMatrix_CSR input_matrix_CSR = COO_to_CSR(input_matrix_COO);
+
+    // Get LU factorization matrix
+    LUFactorization lu_matrix = lu_factor(&input_matrix_CSR);
+
+    // Solve LU matrix
+    DenseVector result = lu_solve(&lu_matrix);
+
+    // Free dynamically allocated stuff
+    SparseMatrix_CSR_free(&input_matrix_CSR);
+    lu_free(&lu_matrix);
+
+    return result;
+}
+
+LUFactorization lu_factor(SparseMatrix_CSR* input_matrix_CSR) {
+    // Check for correct usage
+    if (input_matrix_CSR->rows != input_matrix_CSR->cols) {
+        return ERROR_LU_MATRIX;
+    }
+
+    int dimension = input_matrix_CSR->rows;
+
+    // Initialize LU matrix
+    LUFactorization lu_matrix = {.size = dimension};
+
+    // Allocate memory for matrix
+    lu_matrix.LU_data = malloc(sizeof(double*) * dimension);
+    
+    for (int i = 0; i < dimension; i++) {
+        lu_matrix.LU_data[i] = malloc(sizeof(double));
+    }
+    
+    if (lu_matrix.LU_data == NULL) {
+        return ERROR_LU_MATRIX;
+    }
+
+    // Allocate memory for permutation vector
+    lu_matrix.permutation_vector = malloc(sizeof(int) * dimension);
+    
+    if (lu_matrix.permutation_vector == NULL) {
+        for (int i = 0; i < dimension; i++) {
+            free(lu_matrix.LU_data[i]);
+        }
+        
+        free(lu_matrix.LU_data);
+        return ERROR_LU_MATRIX;
+    }
+
+    // Initialize permutation vector = [0, 1, 2, ... ]
+    for (int i = 0; i < dimension; i++) {
+        lu_matrix.permutation_vector[i] = i;
+    }
+
+    // Convert CSR matrix to dense matrix by populating LU data with entry values from input CSR matrix
+    for (int i = 0; i < dimension; i++) {
+        for (int j = 0; j < dimension; j++) {
+            double entry_value = SparseMatrix_CSR_get_entry(input_matrix_CSR, i, j);
+            lu_matrix.LU_data[i][j] = entry_value;
+        }
+    }
+
+    // TODO
+
+    return lu_matrix;
+}
