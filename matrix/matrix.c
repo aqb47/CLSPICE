@@ -1,235 +1,46 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "matrix.h"
-
-static Matrix negate(Matrix A);
-static Matrix generate_submatrix(Matrix A, int row, int col);
-static Matrix multiply_constant(double constant, Matrix A);
 
 static Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_matrix);
 static void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col);
 static void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale);
 
-// Add two matrices A and B with same dimensions
-Matrix add(Matrix A, Matrix B) {
-    // If dimensions don't match return an empty matrix
-    if (A.rows != B.rows || A.cols != B.cols) {
-        return EMPTY_MATRIX; 
-    }
-
-    // Initialize result matrix C
-    int rows = A.rows;
-    int cols = A.cols;
-
-    Matrix C = {.data = {{0}}, .rows = rows, .cols = cols};
-
-    // For each row
-    for (int i = 0; i < rows; i++) {
-        // For each column in row
-        for (int j = 0; j < cols; j++) {
-            // Add entries from A and B into C
-            C.data[i][j] = A.data[i][j] + B.data[i][j];
-        }
-    }
-
-    return C;
-}
-
-// Negate all elements of A
-Matrix negate(Matrix A) {
-    int rows = A.rows;
-    int cols = A.cols;
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            A.data[i][j] = -A.data[i][j];
-        }
-    }
-
-    return A;
-}
-
-// Subtract B from A
-Matrix subtract(Matrix A, Matrix B) {
-    B = negate(B);
-
-    return add(A, B);
-}
-
-// Multiply A and B in order A * B
-Matrix multiply(Matrix A, Matrix B) {
-    int A_rows = A.rows;
-    int A_cols = A.cols;
-
-    int B_rows = B.rows;
-    int B_cols = B.cols;
-
-    // Return an empty matrix if dimensions do not match
-    if (A_cols != B_rows) {
+// Initialize matrix to zero
+Matrix Matrix_init(int rows, int cols) {
+    // Bounds check
+    if (rows < 0 || cols < 0) {
         return EMPTY_MATRIX;
     }
 
-    // Initialize result matrix C with dimensions A_rows x B_cols
-    Matrix C = {.data = {{0}}, .rows = A_rows, .cols = B_cols};
+    // Initialize matrix
+    Matrix new_matrix = {.rows = rows, .cols = cols};
 
-    for (int i = 0; i < A_rows; i++) {
-        for (int j = 0; j < B_cols; j++) {
-            for (int k = 0; k < A_cols; k++) {
-                C.data[i][j] += A.data[i][k] * B.data[k][j];
-            }
-        }
-    }
+    // Allocate memory for row pointers
+    new_matrix.data = malloc(sizeof(double*) * rows);
 
-    return C;
-}
-
-// Swap rows and columns of a matrix
-Matrix transpose(Matrix A) {
-    int rows = A.rows;
-    int cols = A.cols;
-
-    // Initialize result matrix B with swapped dimensions
-    Matrix B = {{{0}}, cols, rows};
-
-    // Go through each row
+    // Allocate memory for column pointers
     for (int i = 0; i < rows; i++) {
-        // Go throuch each column
-        for (int j = 0; j < cols; j++) {
-            // Swap [row][col] and [col][row]
-            B.data[j][i] = A.data[i][j];
-        }
+        new_matrix.data[i] = calloc(cols, sizeof(double));
     }
 
-    return B;
+    return new_matrix;
 }
 
-// Get determinant from a matrix. Returns NAN if something goes wrong
-double determinant(Matrix A) {
-    int rows = A.rows;
-    int cols = A.cols;
-
-    // n represents rows or cols of square matrix
-    int n = rows;
-
-    double det_value = 0;
-
-    // Non-square matrices do not have a determinant
-    if (rows != cols) {
-        return NAN;
+void Matrix_free(Matrix* matrix) {
+    // Free column pointers
+    for (int i = 0; i < matrix->rows; i++) {
+        free(matrix->data[i]);
     }
 
-    // 1x1 matrices determinant is their first value
-    if (n == 1) {
-        det_value = A.data[0][0];
-    }
+    // Free row pointers
+    free(matrix->data);
 
-    // 2x2 matrices e.g [a b]
-    //                  [c d]
-    // have a determinant of ad - bc
-    else if (n == 2) {
-        det_value = A.data[0][0] * A.data[1][1] - A.data[0][1] * A.data[1][0];
-    }
-
-    // Recursively generate determinant for n > 2
-    else {
-        for (int i = 0; i < cols; i++) {
-            Matrix submatrix = generate_submatrix(A, 0, i);
-            int sign = (i % 2 == 0) ? 1: -1;
-
-            det_value += sign * A.data[0][i] * determinant(submatrix);
-        }
-    }
-
-    return det_value;
-}
-
-// Generate submatrix with respect to row, col position (which is zero-based)
-Matrix generate_submatrix(Matrix A, int row, int col) {
-    // Initialize submatrix which will have one less row and one less col than initial square matrix
-    int A_rows = A.rows;
-    int A_cols = A.cols;
-
-    Matrix B = {{{0}}, A_rows - 1, A_cols - 1};
-
-    // For nth entry of submatrix count represents n - 1. This will be used to generate position of each entry of submatrix
-    int count = 0;
-
-    // Go throuch each row of initial matrix
-    for (int i = 0; i < A_rows; i++) {
-        // Go throuch each column of initial matrix
-        for (int j = 0; j < A_cols; j++) {
-            // Skip rows or columns from position which w.r.t we're finding the submatrix
-            if (i == row || j == col) {
-                continue;
-            }
-
-            // Generate submatrix position
-            int submatrix_row = floor(count / (A_rows - 1));
-            int submatrix_col = count % (A_rows - 1);
-
-            // Assign values
-            B.data[submatrix_row][submatrix_col] = A.data[i][j];
-            count++;
-        }
-    }
-
-    return B;
-}
-
-// Multiply a matrix with a constant. This returns a matrix with every entry multiplied by that constant
-Matrix multiply_constant(double constant, Matrix A) {
-    int rows = A.rows;
-    int cols = A.cols;
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            A.data[i][j] *= constant;
-        }
-    }
-
-    return A;
-}
-
-// Get an inverse matrix (matrix that multiplied by input produces an identity matrix)
-Matrix inverse(Matrix A) {
-    int rows = A.rows;
-    int cols = A.cols;
-
-    // Non-square matrices do not have an inverse matrix
-    if (rows != cols) {
-        return EMPTY_MATRIX;
-    }
-
-    double det_value = determinant(A);
-
-    // A matrix with zero as a determinant also does not have an inverse matrix
-    if (fabs(det_value) < 1e-9) {
-        return EMPTY_MATRIX;
-    }
-
-    // For a 1x1 matrix
-    if (rows == 1) {
-        Matrix inv_A = {.rows = 1, .cols = 1};
-        inv_A.data[0][0] = 1 / A.data[0][0];
-
-        return inv_A;
-    }
-
-    // Initialize cofactor matrix
-    Matrix cofactor_A = {{{0}}, rows, cols};
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            int sign = ((i + j) % 2 == 0) ? 1 : -1;
-
-            cofactor_A.data[i][j] = sign * determinant(generate_submatrix(A, i, j));
-        }
-    }
-
-    // Calculate inverse matrix
-    Matrix inv_A = multiply_constant(1 / det_value, transpose(cofactor_A));
-
-    return inv_A;
+    // Set values to defaults
+    matrix->data = NULL;
+    matrix->rows = 0;
+    matrix->cols = 0;
 }
 
 Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
@@ -243,19 +54,19 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
     if (result_matrix.cols != 1) {
         return EMPTY_MATRIX;
     }
-    if (coefficient_matrix.cols + 1 > MAX_SIZE) {
-        return EMPTY_MATRIX;
-    }
 
     // Augmented matrix that'll be coefficient matrix with another column representing result
     Matrix augmented_matrix = form_augmented_matrix(coefficient_matrix, result_matrix);
+    if (augmented_matrix.data == NULL) {
+        return EMPTY_MATRIX;
+    }
 
     // Pivot point will be on principal diagonal
     for (int i = 0; i < augmented_matrix.rows; i++) {
         // Perform partial pivoting
         swap_greatest_row(&augmented_matrix, i, i);
 
-        // In case entry is zero 
+        // In case entry is zero the matrix is singular and has infinite/ zero solutions
         if (fabs(augmented_matrix.data[i][i]) < 1e-9) {
             return EMPTY_MATRIX;
         }
@@ -271,7 +82,11 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
     int starting_row = augmented_matrix.rows - 1;
 
     // Initialize result variable matrix with 0 as entry values and fill them up as we get solutions
-    Matrix variable_matrix = {.rows = augmented_matrix.rows, .cols = 1, .data = {{0}}};
+    Matrix variable_matrix = Matrix_init(augmented_matrix.rows, 1);
+    if (variable_matrix.data == NULL) {
+        Matrix_free(&augmented_matrix);
+        return EMPTY_MATRIX;
+    }
 
     // Move through augmented matrix bottom to top
     for (int i = starting_row; i >= 0; i--) {
@@ -297,6 +112,8 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         }
     }
 
+    // Free allocated data for augmented matrix and return result
+    Matrix_free(&augmented_matrix);
     return variable_matrix;
 }
 
@@ -305,13 +122,18 @@ Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_matrix) {
     int rows = coefficient_matrix.rows;
     int cols = coefficient_matrix.cols + result_matrix.cols;
 
-    Matrix augmented_matrix_output = {.rows = rows, .cols = cols, .data = {{0}}};
+    Matrix augmented_matrix_output = Matrix_init(rows, cols);
+    if (augmented_matrix_output.data == NULL) {
+        return EMPTY_MATRIX;
+    }
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
+            // First part of matrix horizontally is the coefficient matrix
             if (j < coefficient_matrix.cols) {
                 augmented_matrix_output.data[i][j] = coefficient_matrix.data[i][j];
             }
+            // Second part of matrix horizontally is the result matrix
             else {
                 augmented_matrix_output.data[i][j] = result_matrix.data[i][j - coefficient_matrix.cols];
             }
@@ -349,5 +171,39 @@ void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col)
 void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale) {
     for (int i = 0; i < matrix->cols; i++) {
         matrix->data[row_added_to][i] = (matrix->data[row_to_be_added][i]*row_to_add_scale) + (matrix->data[row_added_to][i]*row_add_to_scale);
+    }
+}
+
+// Swap rows and columns of input matrix
+Matrix transpose(Matrix input_matrix) {
+    // Initialize output matrix
+    Matrix output_matrix = Matrix_init(input_matrix.cols, input_matrix.rows);
+    if (output_matrix.data == NULL) {
+        return EMPTY_MATRIX;
+    }
+
+    // Go through every row
+    for (int i = 0; i < output_matrix.rows; i++) {
+        // Go through every column
+        for (int j = 0; j < output_matrix.cols; j++) {
+            // Swap entries 
+            output_matrix.data[i][j] = input_matrix.data[j][i];
+        }
+    }
+
+    return output_matrix;
+}
+
+// Print out every entry of a matrix
+void print_matrix(Matrix A) {
+    // Go through every rows
+    for (int i = 0; i < A.rows; i++) {
+        // Go through every column
+        for (int j = 0; j < A.cols; j++) {
+            // Print entry 
+            printf("%lf ", A.data[i][j]);
+        }
+
+        printf("\n");
     }
 }

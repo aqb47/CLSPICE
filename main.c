@@ -18,6 +18,8 @@ int main(void) {
     // Parse the netlist
     if (parse_file(netlist_filename, &my_elements)) {
         printf("Parsing ERROR\n");
+
+        elementDynArray_free(&my_elements);  
         return 2;
     }
 
@@ -32,26 +34,36 @@ int main(void) {
     };
 
     // Initialize matrices
-    Matrix input_matrix;
-    Matrix output_matrix;
+    Matrix input_matrix = Matrix_init(node_number + voltage_source_number - 1, node_number + voltage_source_number - 1);
+    Matrix output_matrix = Matrix_init(node_number + voltage_source_number - 1, 1);
 
     // Build matrices
     if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
         printf("Matrix Building ERROR\n");
+            
+        elementDynArray_free(&my_elements);
+        Matrix_free(&input_matrix);
+        Matrix_free(&output_matrix);
         return 3;
     }
 
     // Get result 
     Matrix result = gaussian_elimination(input_matrix, output_matrix);
-    if (result.rows == 0 || result.cols == 0) {
+    if (result.data == NULL) {
         printf("Solving ERROR\n");
+            
+        elementDynArray_free(&my_elements);
+        Matrix_free(&input_matrix);
+        Matrix_free(&output_matrix);
         return 4;
     }
 
     // Show result
     format_result(result, my_circuit);
 
-    // Free dynamic array
+    // Free dynamic stuff
     elementDynArray_free(&my_elements);
+    Matrix_free(&input_matrix);
+    Matrix_free(&output_matrix);
     return 0;
 }
