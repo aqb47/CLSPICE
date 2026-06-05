@@ -43,23 +43,23 @@ Then run `clspice.exe` and the output (node voltages + voltage source currents) 
 ## What I Want to Add
 • Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity. 
 
-Status: Done 🟩
+Status: 🟩 Done
 
 • Dynamic and sparse matrices, this will make storing matrices more memory-efficient for really large circuits, and LU decomposition for solving those sparse matrices.
 
-Status: Done-ish 🟨, sparse matrices are much more difficult to solve than dense matrices, so I'm sticking to dynamic dense matrices and I'll come back to sparse matrices later :P
+Status: 🟨 Done-ish, sparse matrices are much more difficult to solve than dense matrices, so I'm sticking to dynamic dense matrices and I'll come back to sparse matrices later :P
 
 • Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS) 
 
-Status: Working on this 🟨, implementation order is gonna be VCCS then VCVS, CCVS, CCCS
+Status: 🟨 Working on this, implementation order is gonna be VCCS then VCVS, CCVS, CCCS
 
 • Capacitors and inductors
 
-Status: Not started 🟥, this'll involve implementing AC transient analysis in the circuit simulation
+Status: 🟥 Not started, this'll involve implementing AC transient analysis in the circuit simulation
 
 • A GUI? (Might be too ambitious)
 
-Status: Son 😭 🟥
+Status: 🟥 Son 😭
 
 ## What is SPICE
 **Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
