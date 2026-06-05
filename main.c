@@ -20,6 +20,7 @@ int main(void) {
         printf("Parsing ERROR\n");
 
         elementDynArray_free(&my_elements);  
+        
         return 2;
     }
 

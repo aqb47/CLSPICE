@@ -18,15 +18,31 @@
 // Default length for name of every circuit element
 #define ELEMENT_NAME_LENGTH 4
 
+// All elements except VCVS/ E, VCCS/ G have this as control node value
+#define NON_VC_ELEMENT_NODE -1
+
+// All elements except CCVS/ H, CCCS/ F have this as control name value
+#define NON_CC_ELEMENT_NAME "NUL"
+
 // Elements/ branches that constitute the circuit
 typedef struct {
     char name[ELEMENT_NAME_LENGTH]; // "R1" / "V1"
-    char type; // 'V' / 'I' / 'R', essentially name[0]
+    char type; // 'V' / 'I' / 'R' etc., essentially name[0]
     
     // Nodes are going to be whole numbers where 0 is GND (no node names)
     int node_pos; // Node from
     int node_neg; // Node to
-    
+
+    // For voltage controlled dependent sources (VCVS/ E and VCCS/ G)
+    int ctrl_node_pos;
+    int ctrl_node_neg;
+
+    // For current controlled dependent source (CCCS/ F and CCVS/ H)
+    char ctrl_name[ELEMENT_NAME_LENGTH];
+
+    // For resistors - resistance
+    // For independent voltage/ current sources - output voltage/ current
+    // For dependent voltage/ current sources - gain
     double value;
 } Element;
 

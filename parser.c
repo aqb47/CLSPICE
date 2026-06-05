@@ -13,7 +13,8 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
     FILE* netlist_file = fopen(filename, "r");
     // In case file doesn't exist
     if (netlist_file == NULL) {
-        printf("Couldn't open file!");
+        printf("Couldn't open netlist file");
+
         return 1;
     }
 
@@ -31,20 +32,23 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
         Element element = get_element(line, LINE_SIZE);
 
         // In case of an error element
-        if (element.node_pos == -1) {
+        if (element.node_pos == ERROR_ELEMENT.node_pos) {
             continue;
         }
 
         // Add element to array and close the file is something goes wrong
         if (add_element(dynamic_element_array, &element)) {
             printf("Couldn't add element\n");
+
             fclose(netlist_file);
+            
             return 2;
         }
     }
 
     // Close file on success
     fclose(netlist_file);
+    
     return 0;
 }
 
@@ -53,13 +57,24 @@ Element get_element(char string[], int size) {
     // We'll process the string a little before checking for data
     char processed_string[size];
     
+    // Element specific values
     char element_name[ELEMENT_NAME_LENGTH];
     char element_type;
 
     int node_pos; 
     int node_neg; 
     
+    int ctrl_node_pos;
+    int ctrl_node_neg;
+    char ctrl_name[ELEMENT_NAME_LENGTH];
+
     double value;
+
+    // End pointer for strtol
+    char* end_ptr;
+    
+    // Value as string for parsing last character suffix
+    char value_string[VALUE_SIZE];
 
     // Basically copy the original string and exit for * which represent comments
     for (int i = 0; i < size; i++) {
@@ -71,46 +86,163 @@ Element get_element(char string[], int size) {
 
         processed_string[i] = string[i];
     }
+
+    // If processed string is empty no need to analyze the netlist
+    if (strlen(processed_string) == 0) {
+        return ERROR_ELEMENT;
+    }
+
     // Add another NUL terminator at the very end of the buffer just in case the string to be processed is too long
     processed_string[size - 1] = '\0';
 
-    char value_string[VALUE_SIZE];
+    // Tokenize string
+    char* word_ptr = strtok(processed_string, " ");
 
-    // See how many parts of the data we need could be parsed on the processed line when trying to assign 
-    int result = sscanf(processed_string, "%3s %i %i %49s", element_name, &node_pos, &node_neg, value_string);
+    // Get element name and element type as firs letter of the element name
+    if (strlen(word_ptr) > ELEMENT_NAME_LENGTH - 1) {
+        printf("Element name too long to be processed");
+        return ERROR_ELEMENT;
+    }
+
+    strcpy(element_name, word_ptr);
+    element_type = element_name[0];
+
+    // Get positive node
+    word_ptr = strtok(NULL, " ");
+    if (word_ptr == NULL) {
+        printf("Missing positive node\n");
+        return ERROR_ELEMENT;
+    }
+
+    long temp_node_pos = strtol(word_ptr, &end_ptr, 10);
+    if (temp_node_pos > INT_MAX || temp_node_pos < 0) {
+        printf("Positive node integer out of range\n");
+        return ERROR_ELEMENT;
+    }
+
+    node_pos = (int) temp_node_pos;
+
+    // Get negative node
+    word_ptr = strtok(NULL, " ");
+    if (word_ptr == NULL) {
+        printf("Missing negative node\n");
+        return ERROR_ELEMENT;
+    }
+
+    long temp_node_neg = strtol(word_ptr, &end_ptr, 10);
+    if (temp_node_neg > INT_MAX || temp_node_neg < 0) {
+        printf("Negative node integer out of range\n");
+        return ERROR_ELEMENT;
+    }
+
+    node_neg = (int) temp_node_neg;
+
+    // We have a voltage controlled dependent source which should have 6 total inputs 
+    if (element_name[0] == 'E' || element_name[0] == 'G') {
+        // Get positive control node
+        word_ptr = strtok(NULL, " ");
+        if (word_ptr == NULL) {
+            printf("Missing positive control node\n");
+            return ERROR_ELEMENT;
+        }
+
+        long temp_ctrl_node_pos = strtol(word_ptr, &end_ptr, 10);
+        if (temp_ctrl_node_pos > INT_MAX || temp_ctrl_node_pos < 0) {
+            printf("Positive control node integer out of range\n");
+            return ERROR_ELEMENT;
+        }
+
+        ctrl_node_pos = (int) temp_ctrl_node_pos;
+
+        // Get negative control node
+        word_ptr = strtok(NULL, " ");
+        if (word_ptr == NULL) {
+            printf("Missing negative control node\n");
+            return ERROR_ELEMENT;
+        }
+
+        long temp_ctrl_node_neg = strtol(word_ptr, &end_ptr, 10);
+
+        if (temp_ctrl_node_neg > INT_MAX || temp_node_neg < 0) {
+            printf("Negative control node integer out of range\n");
+            return ERROR_ELEMENT;
+        }
+
+        ctrl_node_neg = (int) temp_ctrl_node_neg; 
+        
+        // Set control name
+        strcpy(ctrl_name, NON_CC_ELEMENT_NAME);
+    }
+
+    // We have a current controlled dependent source which should have 5 total inputs
+    else if (element_name[0] == 'F' || element_name[0] == 'H') {
+        // Set positive and negative control nodes
+        ctrl_node_pos = NON_VC_ELEMENT_NODE;
+        ctrl_node_neg = NON_VC_ELEMENT_NODE;
+
+        // Get control name
+        word_ptr = strtok(NULL, " ");
+        if (word_ptr == NULL) {
+            printf("Missing control name\n");
+            return ERROR_ELEMENT;
+        }
+
+        if (strlen(word_ptr) > ELEMENT_NAME_LENGTH - 1) {
+            printf("Control element name is too long\n");
+            return ERROR_ELEMENT;
+        }
+
+        strcpy(ctrl_name, word_ptr);
+    }
+
+    // Normal element
+    else {
+        // Set ctrl nodes and name
+        ctrl_node_pos = NON_VC_ELEMENT_NODE;
+        ctrl_node_neg = NON_VC_ELEMENT_NODE;
+        strcpy(ctrl_name, NON_CC_ELEMENT_NAME);
+    }
+
+    // Get element value
+    word_ptr = strtok(NULL, " ");
+    if (word_ptr == NULL) {
+        printf("Missing element value\n");
+        return ERROR_ELEMENT;
+    }
+
+    if (strlen(word_ptr) > VALUE_SIZE - 1) {
+        printf("Value of element has too many digits\n");
+        return ERROR_ELEMENT;
+    }
+
+    strcpy(value_string, word_ptr);
 
     // Same thing we did for processed string
     value_string[VALUE_SIZE - 1] = '\0';
 
-    // Something's wrong with the line format
-    if (result != 4) {
-        printf("Could not read 4 data entries in netlist\n");
-
-        return ERROR_ELEMENT;
-    }
-
     // Parse value string. +1 for NUL terminator
     value = parse_string(value_string, strlen(value_string) + 1);
     if (isnan(value)) {
-        printf("Could not parse line in netlist\n");
-
         return ERROR_ELEMENT;
     }
-
-    // The type of a circuit element is essentially the first letter of the element name
-    element_type = element_name[0];
 
     // Initialize our output
     Element output_element = {
         .name = "   ",
         .type = element_type,
+
         .node_pos = node_pos,
         .node_neg = node_neg,
+
+        .ctrl_node_pos = ctrl_node_pos,
+        .ctrl_node_neg = ctrl_node_neg,
+
         .value = value
     };
 
-    // Copy name to output element and return the circuit element
+    // Copy name, control name to output element and return the circuit element
     strcpy(output_element.name, element_name);
+    strcpy(output_element.ctrl_name, ctrl_name);
 
     return output_element;
 }

@@ -111,7 +111,7 @@ int get_voltage_source_number(ElementDynArray dynamic_element_array) {
 
 // Print single element information [format: NAME (type TYPE) NODE+ NODE- VALUE]
 void print_element(Element element) {
-    printf("%s (type %c) %i %i %lf\n", element.name, element.type, element.node_pos, element.node_neg, element.value);
+    printf("%s (type %c) %i %i %i %i %s %lf\n", element.name, element.type, element.node_pos, element.node_neg, element.ctrl_node_pos, element.ctrl_node_neg, element.ctrl_name, element.value);
 }
 
 // Print every circuit element of a dynamic element array based on print_element()
