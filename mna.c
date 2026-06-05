@@ -37,8 +37,11 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
 
     // Check if allocation was successful
     if (conductance_matrix_G.data == NULL || incidence_matrix_B.data == NULL || current_source_current_vector_I.data == NULL || voltage_source_voltage_vector_E.data == NULL) {
+        printf("Could not allocate memory for G, B, I, E matrices during MNA\n");
+
         Matrix_free(&conductance_matrix_G);
         Matrix_free(&incidence_matrix_B);
+
         Matrix_free(&current_source_current_vector_I);
         Matrix_free(&voltage_source_voltage_vector_E);
 
@@ -66,6 +69,14 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         }
         // Unknown component
         else {
+            printf("Unknown component in netlist file\n");
+
+            Matrix_free(&conductance_matrix_G);
+            Matrix_free(&incidence_matrix_B);
+            
+            Matrix_free(&current_source_current_vector_I);
+            Matrix_free(&voltage_source_voltage_vector_E);
+
             return 5;
         }
     }
@@ -77,6 +88,7 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     // Free dynamically allocated matrices
     Matrix_free(&conductance_matrix_G);
     Matrix_free(&incidence_matrix_B);
+
     Matrix_free(&current_source_current_vector_I);
     Matrix_free(&voltage_source_voltage_vector_E);
 
@@ -93,6 +105,8 @@ int build_input_matrix(Matrix* input_matrix, Matrix conductance_matrix_G, Matrix
     Matrix transpose_B = transpose(incidence_matrix_B);
 
     if (transpose_B.data == NULL) {
+        printf("Could not allocate memory for C\n");
+
         return 1;
     }
 

@@ -11,6 +11,7 @@ static void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, doubl
 Matrix Matrix_init(int rows, int cols) {
     // Bounds check
     if (rows < 0 || cols < 0) {
+        printf("Invalid matrix row/ col initialization\n");
         return EMPTY_MATRIX;
     }
 
@@ -20,7 +21,7 @@ Matrix Matrix_init(int rows, int cols) {
     // Allocate memory for row pointers
     new_matrix.data = malloc(sizeof(double*) * rows);
 
-    // Allocate memory for column pointers
+    // Allocate memory for column pointers and initialize to zero
     for (int i = 0; i < rows; i++) {
         new_matrix.data[i] = calloc(cols, sizeof(double));
     }
@@ -28,6 +29,7 @@ Matrix Matrix_init(int rows, int cols) {
     return new_matrix;
 }
 
+// Free matrix data
 void Matrix_free(Matrix* matrix) {
     // Free column pointers
     for (int i = 0; i < matrix->rows; i++) {
@@ -43,21 +45,26 @@ void Matrix_free(Matrix* matrix) {
     matrix->cols = 0;
 }
 
+// Perform Gaussian Elimination to find variable values based on coefficient matrix and result vector
 Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
     // Check for correct usage
     if (coefficient_matrix.rows != coefficient_matrix.cols) {
+        printf("Non-square matrix used as coefficient matrix during Gaussian Elimination\n");
         return EMPTY_MATRIX;
     }
     if (coefficient_matrix.rows != result_matrix.rows) {
+        printf("Coefficient matrix rows and output vector rows do not match during Gaussian Elimination\n");
         return EMPTY_MATRIX;
     }
     if (result_matrix.cols != 1) {
+        printf("Invalid column count for output vector, which must have a single column during Gaussian Elimination\n");
         return EMPTY_MATRIX;
     }
 
     // Augmented matrix that'll be coefficient matrix with another column representing result
     Matrix augmented_matrix = form_augmented_matrix(coefficient_matrix, result_matrix);
     if (augmented_matrix.data == NULL) {
+        printf("Could not allocate memory for augmented matrix during Gaussian Elimination\n");
         return EMPTY_MATRIX;
     }
 
@@ -67,7 +74,7 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         swap_greatest_row(&augmented_matrix, i, i);
 
         // In case entry is zero the matrix is singular and has infinite/ zero solutions
-        if (fabs(augmented_matrix.data[i][i]) < 1e-9) {
+        if (fabs(augmented_matrix.data[i][i]) < 1e-14) {
             return EMPTY_MATRIX;
         }
 
@@ -84,6 +91,8 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
     // Initialize result variable matrix with 0 as entry values and fill them up as we get solutions
     Matrix variable_matrix = Matrix_init(augmented_matrix.rows, 1);
     if (variable_matrix.data == NULL) {
+        printf("Could not allocate memory for variable vector during Gaussian Elimination\n");
+
         Matrix_free(&augmented_matrix);
         return EMPTY_MATRIX;
     }
@@ -103,11 +112,16 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         }
 
         // Calculate new variable value considering no zero division
-        if (!(fabs(augmented_matrix.data[i][i]) < 1e-9)) {
+        if (!(fabs(augmented_matrix.data[i][i]) < 1e-14)) {
             variable_value = RHS / entry_coefficient;
             variable_matrix.data[i][0] = variable_value;
         }
         else {
+            printf("Singular coefficient matrix could not be solved during Gaussian Elimination\n");
+
+            Matrix_free(&variable_matrix);
+            Matrix_free(&augmented_matrix);
+
             return EMPTY_MATRIX;
         }
     }

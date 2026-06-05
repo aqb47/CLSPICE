@@ -8,7 +8,7 @@ int main(void) {
     // Initialize netlist file 
     char* netlist_filename = "netlist.sp";
 
-    // Initialize circuit element array
+    // Initialize circuit element array and check for errors
     ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
     if (my_elements.element_array == NULL) {
         printf("Memory allocation for element ERROR");
@@ -34,10 +34,10 @@ int main(void) {
     };
 
     // Initialize matrices
-    Matrix input_matrix = Matrix_init(node_number + voltage_source_number - 1, node_number + voltage_source_number - 1);
-    Matrix output_matrix = Matrix_init(node_number + voltage_source_number - 1, 1);
+    Matrix input_matrix = Matrix_init(node_number + voltage_source_number - 1, node_number + voltage_source_number - 1); // Coefficient matrix
+    Matrix output_matrix = Matrix_init(node_number + voltage_source_number - 1, 1); // Output vector
 
-    // Build matrices
+    // Build matrices and check for errors
     if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
         printf("Matrix Building ERROR\n");
             
@@ -47,7 +47,7 @@ int main(void) {
         return 3;
     }
 
-    // Get result 
+    // Get result and check for errors
     Matrix result = gaussian_elimination(input_matrix, output_matrix);
     if (result.data == NULL) {
         printf("Solving ERROR\n");
@@ -65,5 +65,6 @@ int main(void) {
     elementDynArray_free(&my_elements);
     Matrix_free(&input_matrix);
     Matrix_free(&output_matrix);
+
     return 0;
 }
