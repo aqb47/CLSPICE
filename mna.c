@@ -81,9 +81,30 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         }
     }
 
-    // Build input, output matrices
-    build_input_matrix(input, conductance_matrix_G, incidence_matrix_B);
-    build_output_matrix(output, current_source_current_vector_I, voltage_source_voltage_vector_E);
+    // Build input, output matrices and check for errors
+    if (build_input_matrix(input, conductance_matrix_G, incidence_matrix_B)) {
+        printf("Could not build input matrix \n");
+
+        Matrix_free(&conductance_matrix_G);
+        Matrix_free(&incidence_matrix_B);
+        
+        Matrix_free(&current_source_current_vector_I);
+        Matrix_free(&voltage_source_voltage_vector_E);
+
+        return 6;
+    }
+
+    if (build_output_matrix(output, current_source_current_vector_I, voltage_source_voltage_vector_E)) {
+        printf("Could not build output matrix \n");
+        
+        Matrix_free(&conductance_matrix_G);
+        Matrix_free(&incidence_matrix_B);
+        
+        Matrix_free(&current_source_current_vector_I);
+        Matrix_free(&voltage_source_voltage_vector_E);
+
+        return 7;
+    }
 
     // Free dynamically allocated matrices
     Matrix_free(&conductance_matrix_G);

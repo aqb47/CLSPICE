@@ -63,7 +63,7 @@ Element get_element(char string[], int size) {
     // Basically copy the original string and exit for * which represent comments
     for (int i = 0; i < size; i++) {
         // Skip line breaks and comments that start with *
-        if (string[i] == '*' || string[i] == '\n') {
+        if (string[i] == '*' || string[i] == '\n' || string[i] == '\0') {
             processed_string[i] = '\0';
             break;
         }
@@ -76,7 +76,7 @@ Element get_element(char string[], int size) {
     char value_string[VALUE_SIZE];
 
     // See how many parts of the data we need could be parsed on the processed line when trying to assign 
-    int result = sscanf(processed_string, "%3s %i %i %s", element_name, &node_pos, &node_neg, value_string);
+    int result = sscanf(processed_string, "%3s %i %i %49s", element_name, &node_pos, &node_neg, value_string);
 
     // Same thing we did for processed string
     value_string[VALUE_SIZE - 1] = '\0';
@@ -86,8 +86,8 @@ Element get_element(char string[], int size) {
         return ERROR_ELEMENT;
     }
 
-    // Parse value string
-    value = parse_string(value_string, strlen(value_string));
+    // Parse value string. +1 for NUL terminator
+    value = parse_string(value_string, strlen(value_string) + 1);
     if (isnan(value)) {
         return ERROR_ELEMENT;
     }
@@ -110,20 +110,20 @@ Element get_element(char string[], int size) {
     return output_element;
 }
 
-// Convert a string array with an SI unit suffix to a double
+// Convert a string array with an SI unit suffix to a double. The size should include the NUL terminator
 double parse_string(char string[], int size) {
     // The copy of the string we'll work with so original string isn't changed
     char string_copy[size];
     strcpy(string_copy, string);
 
     // If there is a suffix it'll be at the last character of the string
-    char suffix = string_copy[size - 1];
+    char suffix = string_copy[size - 2];
     int is_suffix_used = 0;
     char* end;
 
     // Check if it's actually the suffix and isolate number part of string if so
     if (isalpha(suffix)) {
-        string_copy[size - 1] = '\0';
+        string_copy[size - 2] = '\0';
         is_suffix_used = 1;
     }
 

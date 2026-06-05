@@ -20,10 +20,22 @@ Matrix Matrix_init(int rows, int cols) {
 
     // Allocate memory for row pointers
     new_matrix.data = malloc(sizeof(double*) * rows);
+    if (new_matrix.data == NULL) {
+        return EMPTY_MATRIX;
+    }
 
     // Allocate memory for column pointers and initialize to zero
     for (int i = 0; i < rows; i++) {
         new_matrix.data[i] = calloc(cols, sizeof(double));
+
+        if (new_matrix.data[i] == NULL) {
+            for (int j = i; j >= 0; j--) {
+                free(new_matrix.data[j]);
+            }
+            free(new_matrix.data);
+
+            return EMPTY_MATRIX;
+        }
     }
 
     return new_matrix;
@@ -75,6 +87,10 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
 
         // In case entry is zero the matrix is singular and has infinite/ zero solutions
         if (fabs(augmented_matrix.data[i][i]) < 1e-14) {
+            printf("Singular matrix could not be solved during Gaussian elimination\n");
+
+            Matrix_free(&augmented_matrix);
+
             return EMPTY_MATRIX;
         }
 
@@ -94,6 +110,7 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         printf("Could not allocate memory for variable vector during Gaussian Elimination\n");
 
         Matrix_free(&augmented_matrix);
+        
         return EMPTY_MATRIX;
     }
 
