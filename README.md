@@ -41,31 +41,31 @@ Supported element types:
 Then run `clspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
 ## What I Want to Add
-• Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity. 
+• **Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity.**
 
 Status: 🟩 
 
 Done and implemented.
 
-• Dynamic and sparse matrices, this will make storing matrices more memory-efficient for really large circuits, and LU decomposition for solving those sparse matrices.
+• **Dynamic and sparse matrices, this will make storing matrices more memory-efficient for really large circuits, and LU decomposition for solving those sparse matrices.**
 
 Status: 🟨 
 
 Done-ish? Sparse matrices are much more difficult to solve than dense matrices, so I'm sticking to dynamic dense matrices and I'll come back to sparse matrices later :P
 
-• Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS) 
+• **Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)**
 
 Status: 🟨 
 
 Working on this, implementation order is gonna be VCCS then VCVS, CCVS, CCCS.
 
-• Capacitors and inductors
+• **Capacitors and inductors**
 
 Status: 🟥 
 
 Not started, this'll involve implementing AC transient analysis in the circuit simulation.
 
-• A GUI? (Might be too ambitious)
+• **A GUI? (Might be too ambitious)**
 
 Status: 🟥 
 
