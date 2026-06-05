@@ -34,9 +34,10 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
         if (element.node_pos == -1) {
             continue;
         }
+
         // Add element to array and close the file is something goes wrong
         if (add_element(dynamic_element_array, &element)) {
-            printf("Couldn't add element!\n");
+            printf("Couldn't add element\n");
             fclose(netlist_file);
             return 2;
         }
@@ -83,12 +84,16 @@ Element get_element(char string[], int size) {
 
     // Something's wrong with the line format
     if (result != 4) {
+        printf("Could not read 4 data entries in netlist\n");
+
         return ERROR_ELEMENT;
     }
 
     // Parse value string. +1 for NUL terminator
     value = parse_string(value_string, strlen(value_string) + 1);
     if (isnan(value)) {
+        printf("Could not parse line in netlist\n");
+
         return ERROR_ELEMENT;
     }
 
@@ -161,6 +166,8 @@ double parse_string(char string[], int size) {
         }
         // Unknown suffix
         else {
+            printf("Unknown suffix used in value for element\n");
+
             return NAN;
         }
     }
