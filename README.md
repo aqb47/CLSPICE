@@ -13,22 +13,25 @@ Then, input a netlist within 'netlist.sp'.
 e.g.
 ```
 * you can make a comment like this
-* element format: NAME NODE+ NODE- VALUE
+* normal element format: NAME NODE+ NODE- VALUE
+* controlled voltage source element format: NAME NODE+ NODE- CONTROL_NODE+ CONTROL_NODE- GAIN 
+* controlled current source element format: NAME NODE+ NODE- CONTROL_VOLTAGE_SOURCE_NAME GAIN
+* suffixes are also supported - u (micro), m (milli), k (kilo), M (mega), g (giga), t (tera)
 V1 1 0 24
 R1 1 2 1500
-R2 2 0 1000
+R2 2 0 1k
 I1 2 3 0.003
 R3 3 0 2200
 R4 1 3 3300
 V2 2 4 6
 R5 4 0 4700
-I2 0 4 0.0015
+I2 0 4 15m
 .end
 ```
 
 Make sure your node names are numeric and sequential from 0 (which is always the ground node).
 
-The circuit element name must start with a valid element type and is limited to 3 characters in length.
+The circuit element name must start with a valid element type and is limited to 7 characters in length.
 
 Supported element types:
  
@@ -37,6 +40,14 @@ Supported element types:
 • I (DC independent current source)
 
 • R (fixed resistor)
+
+• E (DC voltage controlled voltage source)
+
+• F (DC current controlled current source)
+
+• G (DC voltage controlled current source)
+
+• H (DC current controlled voltage source)
 
 Then run `clspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
 
