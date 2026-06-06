@@ -4,7 +4,7 @@
 
 void format_result(Matrix result, Circuit circuit) {
     // Show node voltages
-    printf("\n=== NODE VOLTAGES === \n");
+    printf("\n=== NODE VOLTAGES ===\n");
 
     for (int i = 0; i < circuit.node_number - 1; i++) {
         printf("v%i = %lf V\n", i + 1, result.data[i][0]);
@@ -13,7 +13,7 @@ void format_result(Matrix result, Circuit circuit) {
     printf("\n");
 
     // Show branch currents
-    printf("\n=== BRANCH CURRENTS === \n");
+    printf("\n=== BRANCH CURRENTS ===\n");
 
     for (int i = 0; i < circuit.elements.size; i++) {
         Element element = circuit.elements.element_array[i];
@@ -38,13 +38,13 @@ void format_result(Matrix result, Circuit circuit) {
 
     // If circuit uses voltage source, show them
     if (circuit.voltage_source_number > 0) {
-        printf("\n=== VOLTAGE SOURCE CURRENTS === \n");
+        printf("\n=== VOLTAGE SOURCE CURRENTS ===\n");
 
         for (int i = 0, voltage_source_count = 0; voltage_source_count < circuit.voltage_source_number; i++) {
             Element element = circuit.elements.element_array[i];
 
-            // If we find an ideal independent voltage source output it's current
-            if (element.type == 'V') {
+            // If we find a voltage source output it's current
+            if (element.type == 'V' || element.type == 'E' || element.type == 'H') {
                 double current_through_voltage_source = result.data[circuit.node_number - 1 + voltage_source_count][0];
 
                 // Print voltage source current

@@ -13,7 +13,7 @@ static void stamp_independent_voltage_source(Element voltage_source, Matrix* B, 
 static void stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter);
 static void stamp_VCCS(Element VCCS, Matrix* G);
 static void stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit);
-static void stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit);
+static void stamp_CCCS(Element CCCS, Matrix* B, Matrix* C, Circuit circuit);
 
 int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     ElementDynArray dynamic_element_array = circuit.elements;
@@ -86,7 +86,7 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         }
         // Current controlled current source
         else if (current_element.type == 'F') {
-            stamp_CCCS(current_element, &incidence_matrix_B, circuit);
+            stamp_CCCS(current_element, &incidence_matrix_B, &incidence_matrix_C, circuit);
         }
         // Voltage controlled current source
         else if (current_element.type == 'G') {
@@ -94,7 +94,7 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         }
         // Current controlled voltage source
         else if (current_element.type == 'H') {
-            stamp_CCVS(current_element, &incidence_matrix_B, &incidence_matrix_B, &control_matrix_D, &voltage_source_voltage_vector_E, &current_voltage_source_count, circuit);
+            stamp_CCVS(current_element, &incidence_matrix_B, &incidence_matrix_C, &control_matrix_D, &voltage_source_voltage_vector_E, &current_voltage_source_count, circuit);
         }
 
         // Unknown component
@@ -235,7 +235,7 @@ void stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix*
     // Add voltage to E
     E->data[*ivs_counter][0] = voltage;
 
-    // Increment independent voltage source counter
+    // Increment voltage source counter
     *ivs_counter += 1;
 }
 
@@ -280,10 +280,12 @@ void stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter)
     // +1 for non-grounded node connected to positive terminal of voltage source
     if (node_pos != 0) {
         B->data[node_pos - 1][*ivs_counter] = +1;
+        C->data[*ivs_counter][node_pos - 1] = +1;
     }
     // -1 for non-grounded node connected to negative terminal of voltage source
     if (node_neg != 0) {
         B->data[node_neg - 1][*ivs_counter] = -1;
+        C->data[*ivs_counter][node_neg - 1] = -1;
     }
 
     // Add dependency to C
@@ -332,7 +334,7 @@ void stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* i
 }
 
 // Stamp current controlled current source
-void stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit) {
+void stamp_CCCS(Element CCCS, Matrix* B, Matrix* C, Circuit circuit) {
     double current_gain = CCCS.value;
 
     int node_pos = CCCS.node_pos;
@@ -343,8 +345,10 @@ void stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit) {
     // Change B for non-grounded nodes of current source
     if (node_pos != 0) {
         B->data[node_pos - 1][control_vs_index] += current_gain;
+        C->data[control_vs_index][node_pos - 1] += current_gain;
     }
     if (node_neg != 0) {
         B->data[node_neg - 1][control_vs_index] -= current_gain;
+        C->data[control_vs_index][node_neg - 1] -= current_gain;
     }
 }

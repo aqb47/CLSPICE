@@ -58,7 +58,7 @@ typedef struct {
 // Circuit itself
 typedef struct {
     int node_number; // Total nodes including GND
-    int voltage_source_number; // Total independent ideal voltage sources
+    int voltage_source_number; // Total ideal voltage sources
     
     ElementDynArray elements; // Elements array - tell us total elements too
 } Circuit;

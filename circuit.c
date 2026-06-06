@@ -106,11 +106,13 @@ int get_voltage_source_index(Circuit circuit, char* voltage_source_name) {
     int voltage_source_count = 0;
 
     for (int i = 0; i < circuit.elements.size; i++) {
-        if (strcmp(voltage_source_name, circuit.elements.element_array[i].name) == 0) {
+        Element current_element = circuit.elements.element_array[i];
+
+        if (strcmp(voltage_source_name, current_element.name) == 0) {
             return voltage_source_count;
         }
 
-        if (circuit.elements.element_array[i].type == 'V') {
+        if (current_element.type == 'V' || current_element.type == 'E' || current_element.type == 'H') {
             voltage_source_count += 1;
         }
     }
