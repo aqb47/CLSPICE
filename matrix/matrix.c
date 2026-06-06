@@ -214,26 +214,6 @@ void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_t
     }
 }
 
-// Swap rows and columns of input matrix
-Matrix transpose(Matrix input_matrix) {
-    // Initialize output matrix
-    Matrix output_matrix = Matrix_init(input_matrix.cols, input_matrix.rows);
-    if (output_matrix.data == NULL) {
-        return EMPTY_MATRIX;
-    }
-
-    // Go through every row
-    for (int i = 0; i < output_matrix.rows; i++) {
-        // Go through every column
-        for (int j = 0; j < output_matrix.cols; j++) {
-            // Swap entries 
-            output_matrix.data[i][j] = input_matrix.data[j][i];
-        }
-    }
-
-    return output_matrix;
-}
-
 // Print out every entry of a matrix
 void print_matrix(Matrix A) {
     // Go through every rows

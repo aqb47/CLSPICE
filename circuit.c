@@ -1,9 +1,11 @@
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "circuit.h"
 
-static int elementDynArray_resize(ElementDynArray* dynamic_element_array);
+static int ElementDynArray_resize(ElementDynArray* dynamic_element_array);
 
-ElementDynArray elementDynArray_init(int capacity) {
+ElementDynArray ElementDynArray_init(int capacity) {
     ElementDynArray output_array;
 
     // Check for correct usage of capacity
@@ -26,7 +28,7 @@ ElementDynArray elementDynArray_init(int capacity) {
     return output_array;
 }
 
-void elementDynArray_free(ElementDynArray* dynamic_element_array) {
+void ElementDynArray_free(ElementDynArray* dynamic_element_array) {
     // The element array is dynamically allocated memory and has to be freed
     free(dynamic_element_array->element_array);
 
@@ -37,7 +39,7 @@ void elementDynArray_free(ElementDynArray* dynamic_element_array) {
 }
 
 // Resize dynamic array to twice its initial capacity
-static int elementDynArray_resize(ElementDynArray* dynamic_element_array) {
+static int ElementDynArray_resize(ElementDynArray* dynamic_element_array) {
     // Create temporary element pointer and reallocate memory
     Element* temp = realloc(dynamic_element_array->element_array, 2 * sizeof(Element) * dynamic_element_array->capacity);
 
@@ -53,11 +55,11 @@ static int elementDynArray_resize(ElementDynArray* dynamic_element_array) {
     return 0;
 }
 
-int add_element(ElementDynArray* dynamic_element_array, Element* element) {
+int ElementDynArray_add(ElementDynArray* dynamic_element_array, Element* element) {
     // If size and capacity are equal a resize is required
     if (dynamic_element_array->size == dynamic_element_array->capacity) {
         // In case resize fails exit early
-        if (elementDynArray_resize(dynamic_element_array)) {
+        if (ElementDynArray_resize(dynamic_element_array)) {
             return 1;
         }
     }
@@ -69,44 +71,51 @@ int add_element(ElementDynArray* dynamic_element_array, Element* element) {
     return 0;
 }
 
-// Nodes in our SPICE program are numerical only
-// Furthermore they should be sequential, one after another. As 0 = GND, this means for n as the highest sequential node number, it also represents number of non-reference nodes
-// That is, if we can get the highest (max) node number and add 1 to it, we'll get total reference and non-reference nodes
-int get_node_number(ElementDynArray dynamic_element_array) {
-    int max = 0;
+Circuit Circuit_init(ElementDynArray elements) {
+    // Maximum node number found after passing through elements
+    int max_node = 0;
+    // Total voltage source count found after passing through elements
+    int voltage_source_count = 0;
 
-    // Loop through dynamic array
-    for (int i = 0; i < dynamic_element_array.size; i++) {
-        // Get both positive and negative nodes
-        int node_pos = dynamic_element_array.element_array[i].node_pos;
-        int node_neg = dynamic_element_array.element_array[i].node_neg;
+    for (int i = 0; i < elements.size; i++) {
+        Element current_element = elements.element_array[i];
+        // See current max node
+        int current_max_node = current_element.node_pos > current_element.node_neg? current_element.node_pos: current_element.node_neg;
 
-        // Identify which one is greater to use for comparison
-        int current_max = (node_pos > node_neg) ? node_pos : node_neg;
+        // Check if it's the max
+        if (current_max_node > max_node) {
+            max_node = current_max_node;
+        }
 
-        // Compare to previous maximum
-        if (current_max > max) {
-            max = current_max;
+        // Check if element is a voltage source
+        if (current_element.type == 'V' || current_element.type == 'E' || current_element.type == 'H') {
+            voltage_source_count += 1;
         }
     }
 
-    // Add one to max node to get total number of nodes
-    return max + 1;
+    Circuit output_circuit = {
+        .elements = elements,
+        .node_number = max_node + 1,
+        .voltage_source_number = voltage_source_count
+    };
+
+    return output_circuit;
 }
 
-// An ideal independent DC voltage source starts with 'V' - so this function looks through the type of every circuit element and matches it with 'V', keeping count of matches
-int get_voltage_source_number(ElementDynArray dynamic_element_array) {
-    int count = 0;
+int get_voltage_source_index(Circuit circuit, char* voltage_source_name) {
+    int voltage_source_count = 0;
 
-    // Loop through dynamic element array
-    for (int i = 0; i < dynamic_element_array.size; i++) {
-        // Check for match
-        if (dynamic_element_array.element_array[i].type == 'V') {
-            count += 1;
+    for (int i = 0; i < circuit.elements.size; i++) {
+        if (strcmp(voltage_source_name, circuit.elements.element_array[i].name) == 0) {
+            return voltage_source_count;
+        }
+
+        if (circuit.elements.element_array[i].type == 'V') {
+            voltage_source_count += 1;
         }
     }
 
-    return count;
+    return -1;
 }
 
 // Print single element information [format: NAME (type TYPE) NODE+ NODE- VALUE]

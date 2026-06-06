@@ -9,7 +9,7 @@ int main(void) {
     char* netlist_filename = "netlist.sp";
 
     // Initialize circuit element array and check for errors
-    ElementDynArray my_elements = elementDynArray_init(DEFAULT_CAPACITY);
+    ElementDynArray my_elements = ElementDynArray_init(DEFAULT_CAPACITY);
     if (my_elements.element_array == NULL) {
         printf("Memory allocation for element ERROR");
         return 1;
@@ -19,20 +19,15 @@ int main(void) {
     if (parse_file(netlist_filename, &my_elements)) {
         printf("Parsing ERROR\n");
 
-        elementDynArray_free(&my_elements);  
+        ElementDynArray_free(&my_elements);  
         
         return 2;
     }
 
-    // Initialize the circuit with the element array
-    int node_number = get_node_number(my_elements);
-    int voltage_source_number = get_voltage_source_number(my_elements);
-
-    Circuit my_circuit = {
-        .elements = my_elements,
-        .node_number = node_number,
-        .voltage_source_number = voltage_source_number
-    };
+    // Initialize the circuit and get necessary information from it
+    Circuit my_circuit = Circuit_init(my_elements);
+    int node_number = my_circuit.node_number;
+    int voltage_source_number = my_circuit.voltage_source_number;
 
     // Initialize matrices
     Matrix input_matrix = Matrix_init(node_number + voltage_source_number - 1, node_number + voltage_source_number - 1); // Coefficient matrix
@@ -40,7 +35,7 @@ int main(void) {
     if (input_matrix.data == NULL || output_matrix.data == NULL) {
         printf("Memory allocation for input, output matrices ERROR\n");
 
-        elementDynArray_free(&my_elements);
+        ElementDynArray_free(&my_elements);
 
         return 3;
     }
@@ -49,7 +44,7 @@ int main(void) {
     if (build_input_output_matrix(&input_matrix, &output_matrix, my_circuit)) {
         printf("Matrix Building ERROR\n");
             
-        elementDynArray_free(&my_elements);
+        ElementDynArray_free(&my_elements);
         Matrix_free(&input_matrix);
         Matrix_free(&output_matrix);
 
@@ -61,7 +56,7 @@ int main(void) {
     if (result.data == NULL) {
         printf("Solving ERROR\n");
             
-        elementDynArray_free(&my_elements);
+        ElementDynArray_free(&my_elements);
         Matrix_free(&input_matrix);
         Matrix_free(&output_matrix);
 
@@ -72,7 +67,7 @@ int main(void) {
     format_result(result, my_circuit);
 
     // Free dynamic stuff
-    elementDynArray_free(&my_elements);
+    ElementDynArray_free(&my_elements);
     Matrix_free(&input_matrix);
     Matrix_free(&output_matrix);
     Matrix_free(&result);

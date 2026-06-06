@@ -4,6 +4,7 @@
 #define CIRCUIT_H
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 // Default capacity for dynamic array of elements
@@ -63,16 +64,17 @@ typedef struct {
 } Circuit;
 
 // Initialize dynamic array for circuit element (uses malloc)
-ElementDynArray elementDynArray_init(int capacity);
-// Free allocated memory for dynamic array from elementDynArray_init()
-void elementDynArray_free(ElementDynArray* dynamic_element_array);
+ElementDynArray ElementDynArray_init(int capacity);
+// Free allocated memory for dynamic array from ElementDynArray_init()
+void ElementDynArray_free(ElementDynArray* dynamic_element_array);
 // Add element to dynamic array
-int add_element(ElementDynArray* dynamic_element_array, Element* element);
+int ElementDynArray_add(ElementDynArray* dynamic_element_array, Element* element);
 
-// Get total nodes from circuit element array
-int get_node_number(ElementDynArray dynamic_element_array);
-// Get total voltage sources from circuit element array
-int get_voltage_source_number(ElementDynArray dynamic_element_array);
+// Initialize circuit and get information about it from elements array (uses stack)
+Circuit Circuit_init(ElementDynArray elements);
+
+// Get zero-based position of voltage source in circuit from its name, i.e. first voltage source returns 0, 10th voltage source returns 9
+int get_voltage_source_index(Circuit circuit, char* voltage_source_name);
 
 // Testing functions
 void print_element(Element element);

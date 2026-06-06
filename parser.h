@@ -12,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <limits.h>
 #include "circuit.h"
 
 // Parse a netlist input and save each element to dynamic array

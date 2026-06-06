@@ -20,8 +20,6 @@ Matrix Matrix_init(int rows, int cols);
 
 Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix);
 
-Matrix transpose(Matrix input_matrix);
-
 void Matrix_free(Matrix* matrix);
 
 void print_matrix(Matrix A);

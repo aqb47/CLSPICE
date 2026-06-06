@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include "parser.h"
 #include "circuit.h"
 
@@ -37,7 +38,7 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
         }
 
         // Add element to array and close the file is something goes wrong
-        if (add_element(dynamic_element_array, &element)) {
+        if (ElementDynArray_add(dynamic_element_array, &element)) {
             printf("Couldn't add element\n");
 
             fclose(netlist_file);
