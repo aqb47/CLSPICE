@@ -167,7 +167,7 @@ Element get_element(char string[], int size) {
 
         long temp_ctrl_node_neg = strtol(word_ptr, &end_ptr, 10);
 
-        if (temp_ctrl_node_neg > INT_MAX || temp_node_neg < 0) {
+        if (temp_ctrl_node_neg > INT_MAX || temp_ctrl_node_neg < 0) {
             printf("Negative control node integer out of range\n");
             return ERROR_ELEMENT;
         }

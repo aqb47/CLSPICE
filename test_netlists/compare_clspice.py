@@ -1,3 +1,4 @@
+import argparse
 import json
 import re
 import subprocess
@@ -10,20 +11,30 @@ NETLIST_PATH = WORKSPACE / "netlist.sp"
 
 # On MacOS
 if (sys.platform == "darwin"):
-    CLSPICE_EXE = WORKSPACE / "clspice"
+    DEFAULT_EXE = WORKSPACE / "clspice"
 else:
-    CLSPICE_EXE = WORKSPACE / "clspice.exe"
+    DEFAULT_EXE = WORKSPACE / "clspice.exe"
 
 REFERENCE_DIR = SCRIPT_DIR / "reference_results"
 DEFAULT_SUITE_DIR = SCRIPT_DIR / "golden"
+DEPENDENT_SOURCES_DIR = SCRIPT_DIR / "dependent_sources"
 TOLERANCE = 1e-6
 GREEN = "\033[32m"
 RED = "\033[31m"
 RESET = "\033[0m"
 
+# current executable used by run_clspice_once; can be overridden via --exe
+CLSPICE_EXE = DEFAULT_EXE
+
 
 def compare_maps(expected, actual):
-    keys = sorted(set(expected) | set(actual), key=lambda key: (key[0], int(key[1:]) if key[1:].isdigit() else key))
+    # sort keys by leading letter, then by numeric suffix when present, else by a stable fallback
+    def sort_key(k):
+        if len(k) > 1 and k[1:].isdigit():
+            return (k[0], int(k[1:]), k)
+        return (k[0], float("inf"), k)
+
+    keys = sorted(set(expected) | set(actual), key=sort_key)
     rows = []
     max_err = 0.0
     passed = True
@@ -139,10 +150,21 @@ def run_case(netlist_path, reference_case):
 
 
 def main():
-    if not CLSPICE_EXE.exists():
-        raise FileNotFoundError(f"missing executable: {CLSPICE_EXE}")
+    parser = argparse.ArgumentParser(description="Run clspice netlists and compare against reference results")
+    parser.add_argument("suite", nargs="?", help="suite directory (relative to test_netlists) to run")
+    parser.add_argument("--exe", help="path to clspice executable (overrides default)")
+    parser.add_argument("--generate-reference", action="store_true", help="Generate reference JSON from current clspice runs")
+    args = parser.parse_args()
 
-    suite_dir = resolve_suite_dir(sys.argv[1] if len(sys.argv) > 1 else None)
+    clspice_exe = Path(args.exe) if args.exe else DEFAULT_EXE
+    if args.generate_reference and not clspice_exe.exists():
+        raise FileNotFoundError(f"missing executable for generating reference: {clspice_exe}")
+
+    # ensure module-level exe variable used by run_clspice_once
+    global CLSPICE_EXE
+    CLSPICE_EXE = clspice_exe
+
+    suite_dir = resolve_suite_dir(args.suite if args.suite else None)
     if not suite_dir.exists():
         raise FileNotFoundError(f"missing suite directory: {suite_dir}")
 
@@ -150,13 +172,42 @@ def main():
     if not netlists:
         raise FileNotFoundError(f"no .sp files found in {suite_dir}")
 
+    reference_suite = None
+
+    if args.generate_reference:
+        # build a new reference mapping by running each netlist
+        reference_suite = {}
+        for netlist_path in netlists:
+            try:
+                (actual_nodes, actual_sources), _ = run_clspice_once(netlist_path.read_text(encoding="ascii"))
+                reference_suite[netlist_path.stem] = {"nodes": actual_nodes, "voltage_sources": actual_sources}
+            except Exception as e:
+                # record the error message so test authors can inspect failures
+                reference_suite[netlist_path.stem] = {"error": str(e)}
+
+        # write out JSON
+        REFERENCE_DIR.mkdir(parents=True, exist_ok=True)
+        out_path = REFERENCE_DIR / f"{suite_dir.name}.json"
+        out_path.write_text(json.dumps(reference_suite, indent=2, sort_keys=True), encoding="ascii")
+        print(f"Wrote reference file: {out_path}")
+        return
+
     reference_suite = load_reference_suite(suite_dir)
 
     overall = True
     for netlist_path in netlists:
         if netlist_path.stem not in reference_suite:
             raise KeyError(f"missing reference case for {netlist_path.stem}")
-        overall = run_case(netlist_path, reference_suite[netlist_path.stem]) and overall
+        try:
+            ok = run_case(netlist_path, reference_suite[netlist_path.stem])
+        except Exception as e:
+            print("=" * 80)
+            print(f"TEST: {netlist_path.stem}")
+            print(f"RESULT: {RED}ERROR{RESET}")
+            print(str(e))
+            ok = False
+
+        overall = ok and overall
 
     print("=" * 80)
     print(f"OVERALL: {GREEN}PASS{RESET}" if overall else f"OVERALL: {RED}FAIL{RESET}")

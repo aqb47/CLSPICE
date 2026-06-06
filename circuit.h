@@ -17,7 +17,8 @@
 #define ERROR_DYNARRAY (ElementDynArray){.capacity = 0, .size = 0, .element_array = NULL}
 
 // Default length for name of every circuit element
-#define ELEMENT_NAME_LENGTH 4
+// Increased to allow slightly longer control element names (e.g. VCTRL)
+#define ELEMENT_NAME_LENGTH 8
 
 // All elements except VCVS/ E, VCCS/ G have this as control node value
 #define NON_VC_ELEMENT_NODE -1
