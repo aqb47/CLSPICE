@@ -51,7 +51,7 @@ Status: Done-ish? Sparse matrices are much more difficult to solve than dense ma
 
 • **Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)**
 
-Status: Working on this, implementation order is gonna be VCCS then VCVS, CCVS, CCCS.
+Status: Done and implemented, but needs more testing.
 
 • **Capacitors and inductors**
 

@@ -286,6 +286,10 @@ int stamp_VCCS(Element VCCS, Matrix* G) {
         printf("Invalid node number for %s\n", VCCS.name);
         return 1;
     }  
+    else if (VCCS.ctrl_node_pos == NON_VC_ELEMENT_NODE || VCCS.ctrl_node_neg == NON_VC_ELEMENT_NODE) {
+        printf("Invalid control node number for %s\n", VCCS.name);
+        return 2;
+    }
 
     double transconductance = VCCS.value;
 
@@ -320,6 +324,10 @@ int stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter) 
     if (VCVS.node_pos < 0 || VCVS.node_neg < 0) {
         printf("Invalid node number for %s\n", VCVS.name);
         return 1;
+    }
+    else if (VCVS.ctrl_node_pos == NON_VC_ELEMENT_NODE || VCVS.ctrl_node_neg == NON_VC_ELEMENT_NODE) {
+        printf("Invalid control node number for %s\n", VCVS.name);
+        return 2;
     }
 
     double voltage_gain = VCVS.value;

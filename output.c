@@ -40,7 +40,7 @@ void format_result(Matrix result, Circuit circuit) {
     if (circuit.voltage_source_number > 0) {
         printf("\n=== INDEPENDENT & DEPENDENT VOLTAGE SOURCE CURRENTS ===\n");
 
-        for (int i = 0, voltage_source_count = 0; voltage_source_count < circuit.voltage_source_number; i++) {
+        for (int i = 0, voltage_source_count = 0; voltage_source_count < circuit.voltage_source_number && i < circuit.elements.size; i++) {
             Element element = circuit.elements.element_array[i];
 
             // If we find a voltage source output it's current

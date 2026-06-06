@@ -105,13 +105,21 @@ Circuit Circuit_init(ElementDynArray elements) {
 int get_voltage_source_index(Circuit circuit, char* voltage_source_name) {
     int voltage_source_count = 0;
 
+    // In case valid voltage source name is not input
+    if (voltage_source_name[0] != 'V' && voltage_source_name[0] != 'E' && voltage_source_name[0] != 'H') {
+        return VS_NOT_FOUND;
+    }
+
+    // Go through all elements in circuit
     for (int i = 0; i < circuit.elements.size; i++) {
         Element current_element = circuit.elements.element_array[i];
 
+        // See if the name of current element matches input voltage source name
         if (strcmp(voltage_source_name, current_element.name) == 0) {
             return voltage_source_count;
         }
 
+        // Increment count for voltage source that isn't input voltage source name
         if (current_element.type == 'V' || current_element.type == 'E' || current_element.type == 'H') {
             voltage_source_count += 1;
         }
