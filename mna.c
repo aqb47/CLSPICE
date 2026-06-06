@@ -5,15 +5,15 @@
 static void build_input_matrix(Matrix* input_matrix, Matrix conductance_matrix_G, Matrix incidence_matrix_B, Matrix incidence_matrix_C, Matrix control_matrix_D);
 static void build_output_matrix(Matrix* output_matrix, Matrix current_vector_I, Matrix voltage_vector_E);
 
-static void stamp_resistor(Element resistor, Matrix* G);
+static int stamp_resistor(Element resistor, Matrix* G);
 
-static void stamp_independent_current_source(Element current_source, Matrix* I);
-static void stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter);
+static int stamp_independent_current_source(Element current_source, Matrix* I);
+static int stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter);
 
-static void stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter);
-static void stamp_VCCS(Element VCCS, Matrix* G);
-static void stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit);
-static void stamp_CCCS(Element CCCS, Matrix* B, Matrix* C, Circuit circuit);
+static int stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter);
+static int stamp_VCCS(Element VCCS, Matrix* G);
+static int stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit);
+static int stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit);
 
 int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     ElementDynArray dynamic_element_array = circuit.elements;
@@ -65,36 +65,37 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     for (int i = 0; i < dynamic_element_array.size; i++) {
         // Get element info
         Element current_element = dynamic_element_array.element_array[i];
+        int return_code;
 
         // Resistor
         if (current_element.type == 'R') {
-            stamp_resistor(current_element, &conductance_matrix_G);
+            return_code = stamp_resistor(current_element, &conductance_matrix_G);
         }
 
         // Current source
         else if (current_element.type == 'I') {
-            stamp_independent_current_source(current_element, &current_source_current_vector_I);
+            return_code = stamp_independent_current_source(current_element, &current_source_current_vector_I);
         }
         // Voltage source
         else if (current_element.type == 'V') {
-            stamp_independent_voltage_source(current_element, &incidence_matrix_B, &incidence_matrix_C, &voltage_source_voltage_vector_E, &current_voltage_source_count);
+            return_code = stamp_independent_voltage_source(current_element, &incidence_matrix_B, &incidence_matrix_C, &voltage_source_voltage_vector_E, &current_voltage_source_count);
         }
 
         // Voltage controlled voltage source
         else if (current_element.type == 'E') {
-            stamp_VCVS(current_element, &incidence_matrix_B, &incidence_matrix_C, &voltage_source_voltage_vector_E, &current_voltage_source_count);
+            return_code = stamp_VCVS(current_element, &incidence_matrix_B, &incidence_matrix_C, &voltage_source_voltage_vector_E, &current_voltage_source_count);
         }
-        // Current controlled current source
+        // Current controlled current source - can go wrong if control source doesn't exist
         else if (current_element.type == 'F') {
-            stamp_CCCS(current_element, &incidence_matrix_B, &incidence_matrix_C, circuit);
+            return_code = stamp_CCCS(current_element, &incidence_matrix_B, circuit);
         }
         // Voltage controlled current source
         else if (current_element.type == 'G') {
-            stamp_VCCS(current_element, &conductance_matrix_G);
+            return_code = stamp_VCCS(current_element, &conductance_matrix_G);
         }
-        // Current controlled voltage source
+        // Current controlled voltage source - can go wrong if control source doesn't exist
         else if (current_element.type == 'H') {
-            stamp_CCVS(current_element, &incidence_matrix_B, &incidence_matrix_C, &control_matrix_D, &voltage_source_voltage_vector_E, &current_voltage_source_count, circuit);
+            return_code = stamp_CCVS(current_element, &incidence_matrix_B, &incidence_matrix_C, &control_matrix_D, &voltage_source_voltage_vector_E, &current_voltage_source_count, circuit);
         }
 
         // Unknown component
@@ -109,6 +110,20 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
             Matrix_free(&voltage_source_voltage_vector_E);
 
             return 5;
+        }
+
+        // Check if stamping was successful
+        if (return_code) {
+            printf("Stamping was unsuccessful for element\n");
+
+            Matrix_free(&conductance_matrix_G);
+            Matrix_free(&incidence_matrix_B);
+            Matrix_free(&incidence_matrix_C);
+            
+            Matrix_free(&current_source_current_vector_I);
+            Matrix_free(&voltage_source_voltage_vector_E);
+
+            return 6;
         }
     }
 
@@ -179,8 +194,18 @@ void build_output_matrix(Matrix* output_matrix, Matrix current_vector_I, Matrix 
 }
 
 // Stamp a DC fixed resistance resistor
-void stamp_resistor(Element resistor, Matrix* G) {
+int stamp_resistor(Element resistor, Matrix* G) {
+    if (resistor.node_pos < 0 || resistor.node_neg < 0) {
+        printf("Invalid node number for %s\n", resistor.name);
+        return 1;
+    }
+
     double resistance = resistor.value;
+    if (resistance < 0 || fabs(resistance) < 1e-14) {
+        printf("Invalid resistance value for %s\n", resistor.name);
+        return 2;
+    }
+
     int node_pos = resistor.node_pos;
     int node_neg = resistor.node_neg;
     
@@ -197,10 +222,17 @@ void stamp_resistor(Element resistor, Matrix* G) {
         G->data[node_pos - 1][node_neg - 1] -= 1 / resistance;
         G->data[node_neg - 1][node_pos - 1] -= 1 / resistance;
     }
+
+    return 0;
 }
 
 // Stamp an independent DC current source
-void stamp_independent_current_source(Element current_source, Matrix* I) {
+int stamp_independent_current_source(Element current_source, Matrix* I) {
+    if (current_source.node_pos < 0 || current_source.node_neg < 0) {
+        printf("Invalid node number for %s\n", current_source.name);
+        return 1;
+    }
+
     double current = current_source.value;
     int node_pos = current_source.node_pos;
     int node_neg = current_source.node_neg;
@@ -213,10 +245,17 @@ void stamp_independent_current_source(Element current_source, Matrix* I) {
     if (node_neg != 0) {
         I->data[node_neg - 1][0] += current;
     }
+
+    return 0;
 }
 
 // Stamp an independent DC voltage source
-void stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter) {
+int stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter) {
+    if (voltage_source.node_pos < 0 || voltage_source.node_neg < 0) {
+        printf("Invalid node number for %s\n", voltage_source.name);
+        return 1;
+    }
+
     double voltage = voltage_source.value;
     int node_pos = voltage_source.node_pos;
     int node_neg = voltage_source.node_neg;
@@ -237,10 +276,17 @@ void stamp_independent_voltage_source(Element voltage_source, Matrix* B, Matrix*
 
     // Increment voltage source counter
     *ivs_counter += 1;
+
+    return 0;
 }
 
 // Stamp voltage controlled current source
-void stamp_VCCS(Element VCCS, Matrix* G) {
+int stamp_VCCS(Element VCCS, Matrix* G) {
+    if (VCCS.node_pos < 0 || VCCS.node_neg < 0) {
+        printf("Invalid node number for %s\n", VCCS.name);
+        return 1;
+    }  
+
     double transconductance = VCCS.value;
 
     int node_pos = VCCS.node_pos;
@@ -265,10 +311,17 @@ void stamp_VCCS(Element VCCS, Matrix* G) {
     if (node_neg != 0 && ctrl_node_neg != 0) {
         G->data[node_neg - 1][ctrl_node_neg - 1] += transconductance;
     }
+
+    return 0;
 }
 
 // Stamp voltage controlled voltage source
-void stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter) {
+int stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter) {
+    if (VCVS.node_pos < 0 || VCVS.node_neg < 0) {
+        printf("Invalid node number for %s\n", VCVS.name);
+        return 1;
+    }
+
     double voltage_gain = VCVS.value;
 
     int node_pos = VCVS.node_pos;
@@ -301,16 +354,27 @@ void stamp_VCVS(Element VCVS, Matrix* B, Matrix* C, Matrix* E, int* ivs_counter)
 
     // Increment counter
     *ivs_counter += 1;
+
+    return 0;
 }
 
 // Stamp current controlled voltage source
-void stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit) {
+int stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit) {
+    if (CCVS.node_pos < 0 || CCVS.node_neg < 0) {
+        printf("Invalid node number for %s\n", CCVS.name);
+        return 1;
+    }
+
     double transresistance = CCVS.value;
 
     int node_pos = CCVS.node_pos;
     int node_neg = CCVS.node_neg;
 
     int control_vs_index = get_voltage_source_index(circuit, CCVS.ctrl_name);
+    if (control_vs_index == VS_NOT_FOUND) {
+        printf("Control voltage source (%s) for CCVS (%s) not found\n", CCVS.ctrl_name, CCVS.name);
+        return 2;
+    }
 
     // +1 for non-grounded node connected to positive terminal of voltage source
     if (node_pos != 0) {
@@ -331,24 +395,35 @@ void stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* i
     
     // Increment counter
     *ivs_counter += 1;
+
+    return 0;
 }
 
 // Stamp current controlled current source
-void stamp_CCCS(Element CCCS, Matrix* B, Matrix* C, Circuit circuit) {
+int stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit) {
+    if (CCCS.node_pos < 0 || CCCS.node_neg < 0) {
+        printf("Invalid node number for %s\n", CCCS.name);
+        return 1;
+    }
+
     double current_gain = CCCS.value;
 
     int node_pos = CCCS.node_pos;
     int node_neg = CCCS.node_neg;
 
     int control_vs_index = get_voltage_source_index(circuit, CCCS.ctrl_name);
+    if (control_vs_index == VS_NOT_FOUND) {
+        printf("Control voltage source (%s) for CCCS (%s) not found\n", CCCS.ctrl_name, CCCS.name);
+        return 2;
+    }
 
     // Change B for non-grounded nodes of current source
     if (node_pos != 0) {
         B->data[node_pos - 1][control_vs_index] += current_gain;
-        C->data[control_vs_index][node_pos - 1] += current_gain;
     }
     if (node_neg != 0) {
         B->data[node_neg - 1][control_vs_index] -= current_gain;
-        C->data[control_vs_index][node_neg - 1] -= current_gain;
     }
+
+    return 0;
 }

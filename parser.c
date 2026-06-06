@@ -53,10 +53,13 @@ int parse_file(const char* filename, ElementDynArray* dynamic_element_array) {
     return 0;
 }
 
-// Convert string in form - (ELEMENT_NAME NODE+ NODE- VALUE) to a circuit element
+// Convert string in form - (ELEMENT_NAME NODE+ NODE- VALUE) to a normal circuit element
+// Or convert string in form - (ELEMENT_NAME NODE+ NODE- CTRL_NODE+ CTRL_NODE- GAIN) to voltage-controlled element
+// Or convert string in form - (ELEMENT_NAME NODE+ NODE- CTRL_ELEMENT_NAME GAIN) to current-controlled element
 Element get_element(char string[], int size) {
-    // We'll process the string a little before checking for data
+    // We'll process the string a little before checking for data in this processed string array
     char processed_string[size];
+    memset(processed_string, 0, size);
     
     // Element specific values
     char element_name[ELEMENT_NAME_LENGTH];

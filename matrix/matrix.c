@@ -44,7 +44,11 @@ Matrix Matrix_init(int rows, int cols) {
 // Free matrix data
 void Matrix_free(Matrix* matrix) {
     // If matrix is already freed 
-    if (matrix == NULL || matrix->data == NULL) {
+    if (matrix == NULL) {
+        return;
+    } 
+        
+    if (matrix->data == NULL) {
         matrix->data = NULL;
         matrix->rows = 0;
         matrix->cols = 0;

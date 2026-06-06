@@ -38,7 +38,7 @@ void format_result(Matrix result, Circuit circuit) {
 
     // If circuit uses voltage source, show them
     if (circuit.voltage_source_number > 0) {
-        printf("\n=== VOLTAGE SOURCE CURRENTS ===\n");
+        printf("\n=== INDEPENDENT & DEPENDENT VOLTAGE SOURCE CURRENTS ===\n");
 
         for (int i = 0, voltage_source_count = 0; voltage_source_count < circuit.voltage_source_number; i++) {
             Element element = circuit.elements.element_array[i];

@@ -117,7 +117,7 @@ int get_voltage_source_index(Circuit circuit, char* voltage_source_name) {
         }
     }
 
-    return -1;
+    return VS_NOT_FOUND;
 }
 
 // Print single element information [format: NAME (type TYPE) NODE+ NODE- VALUE]

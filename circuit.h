@@ -25,6 +25,9 @@
 // All elements except CCVS/ H, CCCS/ F have this as control name value
 #define NON_CC_ELEMENT_NAME "NUL"
 
+// When searching for a voltage source by name, this index will be returned
+#define VS_NOT_FOUND -1
+
 // Elements/ branches that constitute the circuit
 typedef struct {
     char name[ELEMENT_NAME_LENGTH]; // "R1" / "V1"
