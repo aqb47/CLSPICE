@@ -83,7 +83,11 @@ Status: Not started, this'll involve implementing AC transient analysis in the c
 
 • **A GUI? (Might be too ambitious)**
 
+<<<<<<< HEAD
 Status: Yeaah I don't even know where to start with this one. This will involve converting a schematic to a netlist (which is done by actual SPICE programs) which would be very difficult for me to tackle.
+=======
+Status: Yeaah I don't even know where to start with this one.
+>>>>>>> 0213607e1cbc5fdb2afb809ceda78ae198617cd6
 
 ## What is SPICE
 Essentially, all SPICE programs analyse a 'netlist' to get information about nodes, circuit elements and element values within a circuit, and perform an operation called MNA (Modified Nodal Analysis) based on that information. 
@@ -112,3 +116,41 @@ i = Voltage source currents vector
 I = Node current vector 
 E = Voltage source voltage vector
 ```
+<<<<<<< HEAD
+=======
+
+### Conductance Matrix (G)
+This is a square matrix of dimensions `n x n` for `n` amount of non-reference nodes. 
+
+The entry `G(i, j)` or `i`th row and `j`th column entry `(i =/= j)` represents the negative sum of conductances of common resistors between `i`th and `j`th non-reference nodes.
+
+The entry `G(k, k)` or diagonal entries represent positive sum of conductances of resistors attached to `k`th non-reference nodes.
+
+### Incidence Matrix (B)
+This is a matrix of dimension `n x m`, for `n` amount of non-reference nodes and `m` amount of independent voltage sources.
+
+The entry `B(i, j)` tells us about the polarity of `j`th voltage source in relation to `i`th non-reference node. 
+
+If `B(i, j) = +1`, node `i` is connected to positive terminal of `j`th voltage source.
+
+If `B(i, j) = -1`, node `i` is connected to negative terminal of `j`th voltage source.
+
+And if `B(i, j) = 0`, node `i` and `j`th voltage source are not connected to each other.
+
+The matrix C in the input matrix is also just the transpose of this matrix B.
+
+### Node Current Vector (I)
+This is a matrix of dimension `n x 1`, for `n` non-reference nodes.
+
+An entry `I(i, 1)` is the total amount of current entering `i`th node (+ for entering and - for exiting).
+
+### Voltage source voltage vector (E)
+This is a matrix of dimension `m x 1`, for `m` independent voltage sources.
+
+An entry `E(i, 1)` is the magnitude of the voltage across the `i`th voltage source.
+
+### Node voltage vector (v) and voltage source current vector (i)
+These are our unknowns. v is of dimension `n x 1` and i is of dimension `m x 1`, with `n` being non-reference nodes and `m` being voltage sources.
+
+I'd add details about the dependent sources stamping but this README is already really long. So that's pretty much it, I hoped you learnt something from this little learning exercise of a repo.
+>>>>>>> 0213607e1cbc5fdb2afb809ceda78ae198617cd6
