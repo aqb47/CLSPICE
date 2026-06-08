@@ -7,7 +7,7 @@ static Matrix form_augmented_matrix(Matrix coefficient_matrix, Matrix result_mat
 static void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col);
 static void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale);
 
-// Initialize matrix to zero
+// Initialize matrix on heap and set all entries of matrix to zero
 Matrix Matrix_init(int rows, int cols) {
     // Bounds check
     if (rows < 0 || cols < 0) {
@@ -41,7 +41,7 @@ Matrix Matrix_init(int rows, int cols) {
     return new_matrix;
 }
 
-// Free matrix data
+// Free dynamically allocated matrix data
 void Matrix_free(Matrix* matrix) {
     // If matrix is already freed 
     if (matrix == NULL) {
@@ -86,7 +86,7 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         return EMPTY_MATRIX;
     }
 
-    // Augmented matrix that'll be coefficient matrix with another column representing result
+    // Augmented matrix that'll be coefficient matrix concatenated with another column representing result vector
     Matrix augmented_matrix = form_augmented_matrix(coefficient_matrix, result_matrix);
     if (augmented_matrix.data == NULL) {
         printf("Could not allocate memory for augmented matrix during Gaussian Elimination\n");
@@ -95,7 +95,7 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
 
     // Pivot point will be on principal diagonal
     for (int i = 0; i < augmented_matrix.rows; i++) {
-        // Perform partial pivoting
+        // Perform partial pivoting for numerical stability
         swap_greatest_row(&augmented_matrix, i, i);
 
         // In case entry is zero the matrix is singular and has infinite/ zero solutions
@@ -107,15 +107,16 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
             return EMPTY_MATRIX;
         }
 
-        // Make columns of rows below pivot zero
+        // Make columns of rows below pivot equal to zero
         for (int j = i + 1; j < augmented_matrix.rows; j++) {
-            double scale = augmented_matrix.data[j][i] / augmented_matrix.data[i][i];
+            double entry = augmented_matrix.data[j][i];
+            double pivot = augmented_matrix.data[i][i];
+
+            double scale = entry / pivot;
+
             add_row(&augmented_matrix, i, j, -scale, 1);
         }
     }
-
-    // Row we start solving from will be at the bottom going to top for upper triangular matrices
-    int starting_row = augmented_matrix.rows - 1;
 
     // Initialize result variable matrix with 0 as entry values and fill them up as we get solutions
     Matrix variable_matrix = Matrix_init(augmented_matrix.rows, 1);
@@ -127,11 +128,12 @@ Matrix gaussian_elimination(Matrix coefficient_matrix, Matrix result_matrix) {
         return EMPTY_MATRIX;
     }
 
-    // Move through augmented matrix bottom to top
-    for (int i = starting_row; i >= 0; i--) {
+    // Move through augmented matrix bottom to top (backwards substitution)
+    for (int i = augmented_matrix.rows - 1; i >= 0; i--) {
         // Right hand side value
         double RHS = augmented_matrix.data[i][augmented_matrix.cols - 1];
-        // Coefficient of variable
+        
+        // Coefficient of unknown variable
         double entry_coefficient = augmented_matrix.data[i][i];
         // The unknown variable
         double variable_value;
@@ -200,7 +202,7 @@ void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col)
         }
     }
 
-    // If not, swap largest entry row to target row
+    // Swap largest entry row to target row
     for (int j = 0; j < augmented_matrix->cols; j++) {
         double temp = augmented_matrix->data[max_row][j];
 
@@ -211,7 +213,7 @@ void swap_greatest_row(Matrix* augmented_matrix, int target_row, int target_col)
     return;
 }
 
-// Add one row to another 
+// Add one row to another, adjust by scales
 void add_row(Matrix* matrix, int row_to_be_added, int row_added_to, double row_to_add_scale, double row_add_to_scale) {
     for (int i = 0; i < matrix->cols; i++) {
         matrix->data[row_added_to][i] = (matrix->data[row_to_be_added][i]*row_to_add_scale) + (matrix->data[row_added_to][i]*row_add_to_scale);
@@ -224,7 +226,7 @@ void print_matrix(Matrix A) {
     for (int i = 0; i < A.rows; i++) {
         // Go through every column
         for (int j = 0; j < A.cols; j++) {
-            // Print entry 
+            // Print dat entry 
             printf("%lf ", A.data[i][j]);
         }
 

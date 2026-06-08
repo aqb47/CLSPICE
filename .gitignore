@@ -62,3 +62,4 @@ clspice
 .venv/
 
 test_netlists/
+.vscode/

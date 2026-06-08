@@ -3,7 +3,7 @@
 //                          [C D] [i]   [E]
 //                            |     |     |
 //                         input unknown output
-// G = Conductance matrix, B = Incidence matrix, C = Transposed Incidence matrix
+// G = Conductance matrix, B = Incidence matrix, C = Transposed Incidence matrix, D = Control matrix
 // v = Node voltages, i = Voltage source currents
 // I = Current source currents, E = Voltage source voltages
 

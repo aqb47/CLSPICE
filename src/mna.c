@@ -15,6 +15,7 @@ static int stamp_VCCS(Element VCCS, Matrix* G);
 static int stamp_CCVS(Element CCVS, Matrix* B, Matrix* C, Matrix* D, Matrix* E, int* ivs_counter, Circuit circuit);
 static int stamp_CCCS(Element CCCS, Matrix* B, Circuit circuit);
 
+// Build input and output matrices at once by stamping every element of input circuit
 int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
     ElementDynArray dynamic_element_array = circuit.elements;
     int node_number = circuit.node_number;
@@ -34,13 +35,13 @@ int build_input_output_matrix(Matrix* input, Matrix* output, Circuit circuit) {
         return 3;
     }
 
-    // Input matrice constituents
+    // Input matrix constituents
     Matrix conductance_matrix_G = Matrix_init(node_number - 1, node_number - 1);
     Matrix incidence_matrix_B = Matrix_init(node_number - 1, voltage_source_number);
     Matrix incidence_matrix_C = Matrix_init(voltage_source_number, node_number - 1);
     Matrix control_matrix_D = Matrix_init(voltage_source_number, voltage_source_number);
 
-    // Output matrice constituents
+    // Output matrix constituents
     Matrix current_source_current_vector_I = Matrix_init(node_number - 1, 1);
     Matrix voltage_source_voltage_vector_E = Matrix_init(voltage_source_number, 1);
 

@@ -4,7 +4,7 @@ A simple SPICE (Simulation Program with Integrated Circuit Emphasis) implementat
 ## How to Use
 Clone the repository and compile the program with MakeFile.
 
-e.g. If you use mingw32 you can run
+e.g. If you use mingw you can run
 
 ```mingw32-make -f MakeFile```
 
@@ -49,7 +49,20 @@ Supported element types:
 
 • H (DC current controlled voltage source)
 
-Then run `clspice.exe` and the output (node voltages + voltage source currents) should be outputted to the terminal. 
+Then run `clspice.exe` and the output (node voltages + branch currents + voltage source currents) should be outputted to the terminal. 
+
+**Note:** Voltage source currents should always be negative in the output. This is because MNA assumes passive sign convention for all sources. That means current flows from positive to negative. But voltage sources actually have current flowing from negative to positive, because they're active elements. Hence the negative sign.  
+
+Also if you have a current-controlled dependent source that depends on current flowing through an element that isn't a voltage source (like a resistor), you create another node ahead of that element and put a voltage source of 0V in front of it, and put that as the control voltage source. 
+
+e.g 
+```(1)----R1-----(2)```
+
+Lets say we want the current through R1 flowing from node-1 to node-2 as the controlling current for a dependent source
+
+```(1)----R1---(3)---Vzero---(2) ```
+
+Now we can just set Vzero = 0V, and literally put 'Vzero' as the control name for F/ G element types (CCCS and CCVS respectively). Current-controlled sources will always take a voltage source as the control element, because this allows us to manipulate the MNA equations (which have voltage source currents as an output) for stamping those dependent sources.
 
 ## What I Want to Add
 • **Gaussian elimination instead of the inverse matrix method currently being used for solving equations, as matrix inversion by cofactor expansion is very inefficient at O(n!) complexity.**
@@ -58,7 +71,7 @@ Status: Done and implemented.
 
 • **Dynamic and sparse matrices, this will make storing matrices more memory-efficient for really large circuits, and LU decomposition for solving those sparse matrices.**
 
-Status: Done-ish? Sparse matrices are much more difficult to solve than dense matrices, so I'm sticking to dynamic dense matrices and I'll come back to sparse matrices later :P
+Status: Done-ish? I got as far as implementing the input-output matrix building for sparse matrices. But when I tried to solve them I realized sparse matrices are much more difficult to solve than dense matrices, so I'm sticking to dynamic dense matrices with the hope I'll come back to sparse matrices later :P
 
 • **Dependent voltage/ current sources (VCVS, CCVS, VCCS, CCCS)**
 
@@ -70,11 +83,9 @@ Status: Not started, this'll involve implementing AC transient analysis in the c
 
 • **A GUI? (Might be too ambitious)**
 
-Status: Son 😭
+Status: Yeaah I don't even know where to start with this one. This will involve converting a schematic to a netlist (which is done by actual SPICE programs) which would be very difficult for me to tackle.
 
 ## What is SPICE
-**Please note that my following explanation glosses over many details about MNA and is applicable only to circuits consisting of resistors and independent voltage/ current sources (capacitors and inductors complicate things). I wrote this for people like me with a very basic understanding of Nodal Analysis, wanting to know more about the process that SPICE programs use.**
-
 Essentially, all SPICE programs analyse a 'netlist' to get information about nodes, circuit elements and element values within a circuit, and perform an operation called MNA (Modified Nodal Analysis) based on that information. 
 
 Classical nodal analysis is the systematic application of KCL on nodes within electric circuits. You consider one node a 'ground' with 0V and work with node voltages with respect to the ground. For `n` number of nodes, you solve `n - 1` simultaneous linear equations (without voltage sources).
@@ -101,36 +112,3 @@ i = Voltage source currents vector
 I = Node current vector 
 E = Voltage source voltage vector
 ```
-
-### Conductance Matrix (G)
-This is a square matrix of dimensions `n x n` for `n` amount of non-reference nodes. 
-
-The entry `G(i, j)` or `i`th row and `j`th column entry `(i =/= j)` represents the negative sum of conductances of common resistors between `i`th and `j`th non-reference nodes.
-
-The entry `G(k, k)` or diagonal entries represent positive sum of conductances of resistors attached to `k`th non-reference nodes.
-
-### Incidence Matrix (B)
-This is a matrix of dimension `n x m`, for `n` amount of non-reference nodes and `m` amount of independent voltage sources.
-
-The entry `B(i, j)` tells us about the polarity of `j`th voltage source in relation to `i`th non-reference node. 
-
-If `B(i, j) = +1`, node `i` is connected to positive terminal of `j`th voltage source.
-
-If `B(i, j) = -1`, node `i` is connected to negative terminal of `j`th voltage source.
-
-And if `B(i, j) = 0`, node `i` and `j`th voltage source are not connected to each other.
-
-The matrix C in the input matrix is also just the transpose of this matrix B.
-
-### Node Current Vector (I)
-This is a matrix of dimension `n x 1`, for `n` non-reference nodes.
-
-An entry `I(i, 1)` is the total amount of current entering `i`th node (+ for entering and - for exiting).
-
-### Voltage source voltage vector (E)
-This is a matrix of dimension `m x 1`, for `m` independent voltage sources.
-
-An entry `E(i, 1)` is the magnitude of the voltage across the `i`th voltage source.
-
-### Node voltage vector (v) and voltage source current vector (i)
-These are our unknowns. v is of dimension `n x 1` and i is of dimension `m x 1`, with `n` being non-reference nodes and `m` being voltage sources.

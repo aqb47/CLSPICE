@@ -2,6 +2,7 @@
 #include "matrix.h"
 #include "circuit.h"
 
+// Print a title (in format === EXAMPLE ===) followed by result data from circuit
 void format_result(Matrix result, Circuit circuit) {
     // Show node voltages
     printf("\n=== NODE VOLTAGES ===\n");
@@ -59,5 +60,6 @@ void format_result(Matrix result, Circuit circuit) {
     printf("\n");
 
     // Pause execution
+    printf("Press any key to exit...\n");
     getchar();
 }

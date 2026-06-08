@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -g
-INCLUDES = -I. -Imatrix
+INCLUDES = -I. -Imatrix -Iinclude
 
-SRCS = $(wildcard *.c) $(wildcard matrix/*.c)
+SRCS = $(wildcard *.c) $(wildcard matrix/*.c) $(wildcard src/*.c)
 TARGET = clspice
 
 .PHONY: all clean run debug

@@ -13,7 +13,7 @@ ElementDynArray ElementDynArray_init(int capacity) {
         capacity = DEFAULT_CAPACITY;
     }
 
-    // Allocate memory
+    // Allocate memory based on capacity
     output_array.element_array = malloc(sizeof(Element) * capacity);
     
     // In case something goes wrong
@@ -58,7 +58,7 @@ static int ElementDynArray_resize(ElementDynArray* dynamic_element_array) {
 int ElementDynArray_add(ElementDynArray* dynamic_element_array, Element* element) {
     // If size and capacity are equal a resize is required
     if (dynamic_element_array->size == dynamic_element_array->capacity) {
-        // In case resize fails exit early
+        // In case resize fails we have to exit early
         if (ElementDynArray_resize(dynamic_element_array)) {
             return 1;
         }
@@ -77,8 +77,10 @@ Circuit Circuit_init(ElementDynArray elements) {
     // Total voltage source count found after passing through elements
     int voltage_source_count = 0;
 
+    // Go through every element in array
     for (int i = 0; i < elements.size; i++) {
         Element current_element = elements.element_array[i];
+        
         // See current max node
         int current_max_node = current_element.node_pos > current_element.node_neg? current_element.node_pos: current_element.node_neg;
 
@@ -93,6 +95,7 @@ Circuit Circuit_init(ElementDynArray elements) {
         }
     }
 
+    // Initialize output circuit
     Circuit output_circuit = {
         .elements = elements,
         .node_number = max_node + 1,
@@ -128,7 +131,7 @@ int get_voltage_source_index(Circuit circuit, char* voltage_source_name) {
     return VS_NOT_FOUND;
 }
 
-// Print single element information [format: NAME (type TYPE) NODE+ NODE- VALUE]
+// Print single element information [format: NAME (type TYPE) NODE+ NODE- CTRL_NODE+ CTRL_NODE- CTRL_ELEMENT_NAME VALUE]
 void print_element(Element element) {
     printf("%s (type %c) %i %i %i %i %s %lf\n", element.name, element.type, element.node_pos, element.node_neg, element.ctrl_node_pos, element.ctrl_node_neg, element.ctrl_name, element.value);
 }

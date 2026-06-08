@@ -257,7 +257,7 @@ double parse_string(char string[], int size) {
     char string_copy[size];
     strcpy(string_copy, string);
 
-    // If there is a suffix it'll be at the last character of the string
+    // If there is a suffix it'll be at the last character of the string ahead of NUL terminator
     char suffix = string_copy[size - 2];
     int is_suffix_used = 0;
     char* end;
@@ -276,6 +276,10 @@ double parse_string(char string[], int size) {
     }
     
     if (is_suffix_used) {
+        // Nano
+        if (tolower(suffix) == 'n') {
+            value *= 1e-9;
+        }
         // Micro
         if (tolower(suffix) == 'u') {
             value *= 1e-6;
